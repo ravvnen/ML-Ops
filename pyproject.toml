@@ -7,7 +7,9 @@ name = "ML-Art"
 version = "0.0.1"
 description = "Welcome !"
 authors = [
-  { name = "Team Rocket", email = "your@email.com" },
+  { name = "Hassan Hotait ", email = "h.hotait420@gmail.com" },
+  { name = "Phillip Ravn Boe Jensen", email = "your@email.com" }
+  { name = "Xueying Chen", email = "at1047s@gmail.com" }
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
