@@ -1,6 +1,12 @@
 # ML-Art
 
-Welcome !
+# Motivation
+
+TBD
+
+# Data Analysis
+
+TBD
 
 ## Project structure
 
