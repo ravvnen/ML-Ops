@@ -26,6 +26,7 @@ requirements:
 dev_requirements: requirements
 	$(PYTHON_INTERPRETER) -m pip install .["dev"]
 
+
 ## Delete all compiled Python files
 clean:
 	find . -type f -name "*.py[co]" -delete
