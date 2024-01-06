@@ -18,21 +18,23 @@ class ArtDataset(Dataset):
             transform (callable, optional): Optional transform to be applied on a sample.
         """
 
-        ## TODO : Add if train == True/False, make sure training images are not chosen in testing set or else Data Leak
+        ## TODO : Add if train == True/False, make sure training images are not chosen in testing set or else data leak
+        resize_h = 500
+        resize_w = 500
         self.root_dir = root_dir
         self.transform = transform
-        # self.images = torch.empty
-        # self.labels = []
+        self.images = torch.empty((num_images_per_style * len(selected_styles),3,resize_h, resize_w))
+        self.labels = torch.empty((num_images_per_style * len(selected_styles)))
         self.style_counts = {}
 
         # Tensor Transform PIL -> Tensor
 
-        tensor_transform = transforms.Compose([transforms.ToTensor()])
         ## TODO Pick Appropriate Size or Filter Unwanted Resolution
-        resize_transform = transforms.Resize((500,500))
+        auto_transform = transforms.Compose([transforms.Resize((resize_h,resize_w)),transforms.ToTensor()])
+        
 
         # Load images and labels
-        for i,style in enumerate(selected_styles):
+        for j,style in enumerate(selected_styles):
             style_dir = os.path.join(root_dir, style, style)
             if os.path.isdir(style_dir):
                 all = os.listdir(style_dir)
@@ -44,23 +46,22 @@ class ArtDataset(Dataset):
                 else:
                     selected_images = random.sample(all, 
                                                     min(num_images_per_style, cnt))
-                for j,img in enumerate(selected_images):
+                for i,img in enumerate(selected_images):
                     img_path = os.path.join(style_dir, img)
                     image = Image.open(img_path).convert("RGB")
-                    resized_img = resize_transform(image)
-                    tensor_img = tensor_transform(resized_img)
+                   
+                    tensor_img = auto_transform(image)
 
-                    # Define Tensor on First Iteration
-                    if (i == 0) and (j == 0):   # If you know a better way let me know, I hate this
-                        self.images = tensor_img.unsqueeze(0)
-                        self.labels = torch.tensor(i).unsqueeze(0)
-                    # Then concatenate
-                    else:
-                        self.images = torch.cat((self.images,tensor_img.unsqueeze(0)),dim = 0)
-                        self.labels = torch.cat((self.labels,torch.tensor(i).unsqueeze(0)),dim = 0)
+                    # Assign Image & Label to Tensor
+
+                    self.images[i + (j * num_images_per_style),:,:,:] = tensor_img
+                    self.labels[i + (j * num_images_per_style)] = j
 
         if self.transform:
-            self.images = transform(self.images)
+            self.images = self.transform(self.images)
+
+        print("Dataset Images Shape: ",self.images.shape)
+        print("Dataset Targets Shape: ",self.labels.shape)
 
 
     def __len__(self):
@@ -92,7 +93,7 @@ def main(raw_data_path,processed_data_path):
 
     dataset = ArtDataset(root_dir = raw_data_path,
                         selected_styles = styles,
-                        num_images_per_style = 64,
+                        num_images_per_style = 10,
                         transform = None)
     
     torch.save(dataset,"data/processed/dataset.pt")
@@ -103,15 +104,14 @@ def main(raw_data_path,processed_data_path):
 
     dataset = torch.load("data/processed/dataset.pt")
 
-    dataloader = DataLoader(dataset,batch_size = 64, shuffle = True)
+    dataloader = DataLoader(dataset,batch_size = 10, shuffle = True)
 
     data_iter = iter(dataloader)
 
     img,target = next(data_iter)
 
-    print("Images Shape: ",img.shape)
-    print("Target Shape: ",target.shape)
-
+    print("Images Batch Shape: ",img.shape)
+    print("Target Batch Shape: ",target.shape)
 
 
 
