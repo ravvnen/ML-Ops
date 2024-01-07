@@ -3,12 +3,12 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ML-Art"
+name = "ml-art"
 version = "0.0.1"
 description = "Welcome !"
 authors = [
   { name = "Hassan Hotait ", email = "h.hotait420@gmail.com" },
-  { name = "Phillip Ravn Boe Jensen", email = "your@email.com" }
+  { name = "Phillip Ravn Boe Jensen", email = "your@email.com" },
   { name = "Xueying Chen", email = "at1047s@gmail.com" }
 ]
 license = { file = "LICENSE" }
@@ -17,7 +17,7 @@ requires-python = ">=3.11"
 dynamic = ["dependencies", "optional-dependencies"]
 
 [tool.setuptools]
-packages = ["ML-Art"]
+packages = ["ml_art"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
