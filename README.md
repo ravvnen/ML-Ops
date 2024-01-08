@@ -2,7 +2,7 @@
 
 # Motivation
 
-TBD
+This project represents an application of machine learning in the domain of visual arts, where we are hoping to see how technology can be used to interpret and analyze artistic works.
 
 # Data Analysis
 
