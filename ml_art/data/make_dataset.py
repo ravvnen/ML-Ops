@@ -5,34 +5,47 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 import random
 import click
-import pandas as pd
 
 
 class ArtDataset(Dataset):
     def __init__(
-        self, root_dir, selected_styles, num_images_per_style=None, transform=None
+        self,
+        root_dir,
+        selected_styles,
+        num_images_per_style=None,
+        transform=None,
     ):
         """
         Args:
             root_dir (string): Directory with all the images and subdirectories for art styles.
             transform (callable, optional): Optional transform to be applied on a sample.
         """
-        ## TODO : Add if train == True/False, make sure training images are not chosen in testing set or else data leak
+        # TODO : Add if train == True/False, make sure training images are not chosen in testing set or else data leak
         resize_h = 500
         resize_w = 500
         self.root_dir = root_dir
         self.transform = transform
         self.images = torch.empty(
-            (num_images_per_style * len(selected_styles), 3, resize_h, resize_w)
+            (
+                num_images_per_style * len(selected_styles),
+                3,
+                resize_h,
+                resize_w,
+            )
         )
-        self.labels = torch.empty((num_images_per_style * len(selected_styles)))
+        self.labels = torch.empty(
+            (num_images_per_style * len(selected_styles))
+        )
         self.style_counts = {}
 
         # Tensor Transform PIL -> Tensor
 
-        ## TODO Pick Appropriate Size or Filter Unwanted Resolution
+        # TODO Pick Appropriate Size or Filter Unwanted Resolution
         auto_transform = transforms.Compose(
-            [transforms.Resize((resize_h, resize_w)), transforms.ToTensor()]
+            [
+                transforms.Resize((resize_h, resize_w)),
+                transforms.ToTensor(),
+            ]
         )
 
         # Load images and labels
@@ -46,7 +59,9 @@ class ArtDataset(Dataset):
                 if num_images_per_style is None or num_images_per_style > cnt:
                     selected_images = all
                 else:
-                    selected_images = random.sample(all, min(num_images_per_style, cnt))
+                    selected_images = random.sample(
+                        all, min(num_images_per_style, cnt)
+                    )
                 for i, img in enumerate(selected_images):
                     img_path = os.path.join(style_dir, img)
                     image = Image.open(img_path).convert("RGB")
@@ -55,7 +70,9 @@ class ArtDataset(Dataset):
 
                     # Assign Image & Label to Tensor
 
-                    self.images[i + (j * num_images_per_style), :, :, :] = tensor_img
+                    self.images[
+                        i + (j * num_images_per_style), :, :, :
+                    ] = tensor_img
                     self.labels[i + (j * num_images_per_style)] = j
 
         if self.transform:
@@ -83,7 +100,9 @@ class ArtDataset(Dataset):
 @click.command()
 @click.option("--raw_data_path", default="data/raw", help="Path To Raw Data")
 @click.option(
-    "--processed_data_path", default="data/processed", help="Path To Raw Data"
+    "--processed_data_path",
+    default="data/processed",
+    help="Path To Raw Data",
 )
 def main(raw_data_path, processed_data_path):
     # Selected Styles
