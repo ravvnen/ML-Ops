@@ -16,9 +16,6 @@ readme = "README.md"
 requires-python = ">=3.11"
 dynamic = ["dependencies", "optional-dependencies"]
 
-[tool.black]
-line-length = 79
-
 [tool.setuptools]
 packages = ["ml_art"]
 
