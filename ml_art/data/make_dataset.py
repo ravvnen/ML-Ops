@@ -116,28 +116,25 @@ def main(config):
     )
 
     # Create the dataset
-    path = os.path.join(os.getenv("LOCAL_PATH"),data_cfg.path)
-    print(path)
     dataset = ArtDataset(
-        root_dir=path,
+        root_dir=os.path.join(os.getenv("LOCAL_PATH"),data_cfg.path),
         selected_styles=data_cfg.styles,
         num_images_per_style=data_cfg.imgs_per_style,
         transform=transform,
     )
 
-    print(len(dataset))
 
-    # # Split the dataset into training and test sets
-    # train_idx, test_idx = train_test_split(
-    #     list(range(len(dataset))), test_size=data_cfg.test_size, random_state=data_cfg.seed
-    # )
+    # Split the dataset into training and test sets
+    train_idx, test_idx = train_test_split(
+        list(range(len(dataset))), test_size=data_cfg.test_size, random_state=data_cfg.seed
+    )
 
-    # # Create subset for training and test from the indices
-    # train_dataset = Subset(dataset, train_idx)
-    # test_dataset = Subset(dataset, test_idx)
+    # Create subset for training and test from the indices
+    train_dataset = Subset(dataset, train_idx)
+    test_dataset = Subset(dataset, test_idx)
 
-    # torch.save(train_dataset,"data/processed/train_set.pt")
-    # torch.save(test_dataset,"data/processed/test_set.pt")
+    torch.save(train_dataset,"data/processed/train_set.pt")
+    torch.save(test_dataset,"data/processed/test_set.pt")
 
 
 
