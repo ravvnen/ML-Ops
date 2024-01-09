@@ -1,5 +1,11 @@
 docs/site/
 
+/data/raw/*
+/data/processed/*
+
+/notebooks/art_model.pth
+
+
 
 # test cache
 manual_test/
