@@ -1,3 +1,29 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ml_art"
+version = "0.0.1"
+description = "Exercise in MLops"
+authors = [
+  { name = "HassanHotait DTU", email = "your@email.com" },
+]
+
+readme = "README.md"
+requires-python = "~=3.11"
+dynamic = ["dependencies", "optional-dependencies"]
+
+[tool.setuptools]
+packages = ["ml_art"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.dynamic.optional-dependencies]
+dev = {file = ['requirements_dev.txt']}
+
+
 [tool.black]
 target-version = ['py310']
 line-length = 120
@@ -125,7 +151,7 @@ show_error_codes = true
 exclude = ["docs", "test", "tests"]
 
 [tool.pyright]
-pythonVersion = "3.10"
+pythonVersion = "3.11"
 typeCheckingMode = "basic"
 # enable subset of "strict"
 reportDuplicateImport = true
