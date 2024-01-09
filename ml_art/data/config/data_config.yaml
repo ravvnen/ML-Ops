@@ -1,0 +1,6 @@
+dataset:
+  path: data\raw\
+  styles:  ["Symbolism", "Japanese_Art"]
+  imgs_per_style: 100
+  seed: 2476
+  test_size: 0.2
