@@ -1,7 +1,5 @@
 docs/site/
 
-/data/raw/
-/data/processed/
 
 /notebooks/art_model.pth
 
