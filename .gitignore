@@ -13,15 +13,14 @@ html/
 reports/
 lectures/
 logs/
-models/
 ressources/
 .ruff_cache
 data/*.h5
 venv/
 .venv/
 
-/data/raw/*
-/data/processed/*
+data/raw/*
+data/processed/*
 
 
 ################################
