@@ -2,7 +2,7 @@
 ###########  FILES  ############
 ################################
 *.exe
-notebooks/art_model.pth
+/notebooks/art_model.pth
 
 ################################
 ########### FOLDERS ############
@@ -20,8 +20,8 @@ data/*.h5
 venv/
 .venv/
 
-data/raw/*
-data/processed/*
+/data/raw/*
+/data/processed/*
 
 
 ################################
