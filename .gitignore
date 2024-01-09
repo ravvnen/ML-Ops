@@ -1,5 +1,8 @@
 docs/site/
 
+data/*
+
+notebooks/art_model.pth
 
 # test cache
 manual_test/
