@@ -20,7 +20,7 @@ venv/
 .venv/
 
 /data/raw/*
-/data/processed/*
+# /data/processed/*
 
 
 ################################
