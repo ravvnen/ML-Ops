@@ -4,7 +4,7 @@
 # GLOBALS                                                                       #
 #################################################################################
 
-PROJECT_NAME = ML-Art
+PROJECT_NAME = ml_art
 PYTHON_VERSION = 3.11
 PYTHON_INTERPRETER = python
 
@@ -40,6 +40,14 @@ clean:
 ## Process raw data into processed data
 data:
 	python $(PROJECT_NAME)/data/make_dataset.py
+
+train:
+	python $(PROJECT_NAME)/train_model.py
+
+train_test:
+	python $(PROJECT_NAME)/train_test_viz.py
+
+
 
 #################################################################################
 # Documentation RULES                                                           #

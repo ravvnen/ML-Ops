@@ -7,11 +7,20 @@ RUN apt update && \
 
 COPY requirements.txt requirements.txt
 COPY pyproject.toml pyproject.toml
-COPY ML-Art/ ML-Art/
-COPY data/ data/
+COPY Makefile Makefile
+# Mounting is More efficient than copying
+# COPY ml_art/ ml_art/
+# COPY data/ data/
+# I will mount all the created dir to my host folders
+RUN mkdir ml_art
+RUN mkdir data
+# defualt log directory set by HYDRA will be mounted to notebooks on run
+RUN mkdir outputs
 
 WORKDIR /
-RUN pip install -r requirements.txt --no-cache-dir
-RUN pip install . --no-deps --no-cache-dir
+RUN make requirements
 
-ENTRYPOINT ["python", "-u", "ML-Art/train_model.py"]
+ENTRYPOINT ["make","data"]
+
+# Set the default command to run "make train"
+CMD ["train"]
