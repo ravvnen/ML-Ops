@@ -18,7 +18,7 @@ dataset:
   raw_path: C:\Users\Hasan\OneDrive\Desktop\Projects\ML-Ops\data\raw
   # Path where make_dataset.py saves .pt files
   processed_path: C:\Users\Hasan\OneDrive\Desktop\Projects\ML-Ops\data\processed
-  styles:  ["Symbolism", "Japanese_Art"]
+  styles:  ["Symbolism", "Romanticism"]
   imgs_per_style: 100
   seed: 2476
   test_size: 0.2
