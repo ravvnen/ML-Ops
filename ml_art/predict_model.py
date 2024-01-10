@@ -95,8 +95,8 @@ def predict(
         else:
             tmp = torch.cat(total_output)
 
-    logger.info("Model Output: %s", str(output))
-    logger.info("Output Shape: %s", str(output.shape))
+    logger.info("Model Output: %s", str(tmp))
+    logger.info("Output Shape: %s", str(tmp.shape))
     logger.info("Average Test Loss: %s", str(avg_test_loss))
     logger.info("Test Accuracy: %s", str(test_accuracy))
 
@@ -110,6 +110,13 @@ def main(config):
     # Init Logger - Hydra sets log dirs to outputs/ by default
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
+    # Create a handler and set the formatter
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+
+    # Add the handler to the logger
+    logger.addHandler(handler)
 
     # Hydra Configuration For Model Setup
     data_cfg = config.dataset
@@ -122,7 +129,11 @@ def main(config):
     torch.manual_seed(data_cfg.seed)
     random.seed(data_cfg.seed)
 
-    _, test_loader = wiki_art(config)
+
+
+
+    _,test_loader = wiki_art(config)
+
 
     if model_cfg != "CNN":
         try:
