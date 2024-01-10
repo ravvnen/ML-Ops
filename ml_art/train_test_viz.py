@@ -69,9 +69,7 @@ def train_test_viz(
         correct = 0
         total = 0
 
-        data_loader = tqdm(
-            data_loader, desc="Training", unit="batch", ascii=True
-        )
+        data_loader = tqdm(data_loader, desc="Training", unit="batch",ascii=True)
 
         for images, labels in data_loader:
             images, labels = images.to(device), labels.to(device)
@@ -145,14 +143,12 @@ def train_test_viz(
         testing_accuracies.append(test_accuracy)
 
     # Log KPIs & weights
-    hydra_log_dir = (
-        hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
-    )
+    hydra_log_dir = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
 
-    torch.save(
-        model.state_dict(), os.path.join(hydra_log_dir, model_cfg + ".pth")
-    )
+    torch.save(model.state_dict(),os.path.join(hydra_log_dir,model_cfg+".pth"))
     logger.info(f"Saved Weights to {hydra_log_dir}")
+
+
 
     df = pd.DataFrame(
         {
@@ -165,13 +161,11 @@ def train_test_viz(
     df.to_csv(os.path.join(hydra_log_dir, "train_test_log.csv"), index=False)
     logger.info(f"Saved loss & accuracy to {hydra_log_dir}")
 
-    plot_model_performance(df, cfg.model, hydra_log_dir)
-    logger.info(f"Saved loss & accuracy plots to {hydra_log_dir}")
+    plot_model_performance(df,cfg.model,hydra_log_dir)
 
 
-@hydra.main(
-    config_path="config", config_name="config.yaml", version_base="1.1"
-)
+
+@hydra.main(config_path="config",config_name="config.yaml",version_base="1.1")
 def main(config):
     # Init Logger - Hydra sets log dirs to outputs/ by default
     logger = logging.getLogger(__name__)
