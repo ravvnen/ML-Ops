@@ -1,13 +1,36 @@
 import os
-from PIL import Image
-import torch
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
 import random
-import click
+import hydra
+import torch
+import logging
+
+from torchvision import transforms
+from torch.utils.data import Dataset, Subset
+from PIL import Image, UnidentifiedImageError
+from omegaconf import OmegaConf
+from sklearn.model_selection import train_test_split
 
 
-class ArtDataset(Dataset):
+# Here we can change the input size of given images
+def pad_and_resize(img, target_size):
+    # Resize if any of the dimensions are greater than target size
+    if img.size[0] > target_size[0] or img.size[1] > target_size[1]:
+        # Scale down yet keeping the aspect ratio
+        img.thumbnail(target_size, Image.Resampling.LANCZOS)
+
+    # Calculate padding
+    padding_l = (target_size[0] - img.size[0]) // 2
+    padding_t = (target_size[1] - img.size[1]) // 2
+    padding_r = target_size[0] - img.size[0] - padding_l
+    padding_b = target_size[1] - img.size[1] - padding_t
+    paddings = (padding_l, padding_t, padding_r, padding_b)
+
+    return transforms.functional.pad(
+        img, paddings, padding_mode="constant", fill=0
+    )
+
+
+class WikiArt(Dataset):
     def __init__(
         self,
         root_dir,
@@ -18,39 +41,24 @@ class ArtDataset(Dataset):
         """
         Args:
             root_dir (string): Directory with all the images and subdirectories for art styles.
+            selected_styles (list): List of art styles that need to be classified.
+            num_images_per_style (int, optional): Number of images from each style.
             transform (callable, optional): Optional transform to be applied on a sample.
         """
-        # TODO : Add if train == True/False, make sure training images are not chosen in testing set or else data leak
-        resize_h = 500
-        resize_w = 500
         self.root_dir = root_dir
         self.transform = transform
-        self.images = torch.empty(
-            (
-                num_images_per_style * len(selected_styles),
-                3,
-                resize_h,
-                resize_w,
-            )
-        )
-        self.labels = torch.empty(
-            (num_images_per_style * len(selected_styles))
-        )
+        self.images = []
+        self.labels = []
         self.style_counts = {}
-
-        # Tensor Transform PIL -> Tensor
-
-        # TODO Pick Appropriate Size or Filter Unwanted Resolution
-        auto_transform = transforms.Compose(
-            [
-                transforms.Resize((resize_h, resize_w)),
-                transforms.ToTensor(),
-            ]
-        )
+        self.style_to_idx = {
+            style: idx for idx, style in enumerate(selected_styles)
+        }
 
         # Load images and labels
-        for j, style in enumerate(selected_styles):
+        for style in selected_styles:
             style_dir = os.path.join(root_dir, style, style)
+            assert os.path.isdir(style_dir)
+
             if os.path.isdir(style_dir):
                 all = os.listdir(style_dir)
                 cnt = len(all)
@@ -62,30 +70,30 @@ class ArtDataset(Dataset):
                     selected_images = random.sample(
                         all, min(num_images_per_style, cnt)
                     )
-                for i, img in enumerate(selected_images):
+                for img in selected_images:
                     img_path = os.path.join(style_dir, img)
-                    image = Image.open(img_path).convert("RGB")
-
-                    tensor_img = auto_transform(image)
-
-                    # Assign Image & Label to Tensor
-
-                    self.images[
-                        i + (j * num_images_per_style), :, :, :
-                    ] = tensor_img
-                    self.labels[i + (j * num_images_per_style)] = j
-
-        if self.transform:
-            self.images = self.transform(self.images)
-
-        print("Dataset Images Shape: ", self.images.shape)
-        print("Dataset Targets Shape: ", self.labels.shape)
+                    self.images.append(img_path)
+                    self.labels.append(style)
 
     def __len__(self):
         return len(self.images)
 
     def __getitem__(self, idx):
-        return self.images[idx], self.labels[idx]
+        img_name = self.images[idx]
+        try:
+            image = Image.open(img_name).convert("RGB")
+            if self.transform:
+                image = self.transform(image)
+        except UnidentifiedImageError:
+            print(
+                f"Warning: Skipping file {img_name} as it couldn't be identified."
+            )
+            # Return the next image
+            return self.__getitem__((idx + 1) % self.__len__())
+
+        # Convert label to index
+        label_idx = self.style_to_idx[self.labels[idx]]
+        return image, label_idx
 
     def get_random_image_by_style(self, style):
         style_dir = os.path.join(self.root_dir, style, style)
@@ -97,40 +105,81 @@ class ArtDataset(Dataset):
         return None
 
 
-@click.command()
-@click.option("--raw_data_path", default="data/raw", help="Path To Raw Data")
-@click.option(
-    "--processed_data_path",
-    default="data/processed",
-    help="Path To Raw Data",
+print(os.getcwd())
+
+
+@hydra.main(
+    config_path="../config", config_name="config.yaml", version_base="1.1"
 )
-def main(raw_data_path, processed_data_path):
-    # Selected Styles
+def main(config):
+    # Init Logger - Hydra sets log dirs to outputs/ by default
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
 
-    styles = ["Academic_Art", "Realism", "Symbolism"]
+    logger.info(f"configuration: \n {OmegaConf.to_yaml(config)}")
+    data_cfg = config.dataset
 
-    dataset = ArtDataset(
-        root_dir=raw_data_path,
-        selected_styles=styles,
-        num_images_per_style=10,
-        transform=None,
+    # Ensure Reproducibility
+    torch.manual_seed(data_cfg.seed)
+    random.seed(data_cfg.seed)
+
+    resize_target = (data_cfg.input_shape[1], data_cfg.input_shape[2])
+
+    # Error due to the pad_resize function in trasnforms.Lambda -> Temporary Fix Below
+    #     Traceback (most recent call last):
+    #   File "c:\Users\Hasan\OneDrive\Desktop\Projects\ML-Ops\ml_art\data\make_dataset.py", line 157, in main
+    #     torch.save(train_dataset,os.path.join(data_cfg.processed_path,"train_set.pt"))
+    #   File "C:\Users\Hasan\miniconda3\envs\ML-Art\Lib\site-packages\torch\serialization.py", line 619, in save
+    #     _save(obj, opened_zipfile, pickle_module, pickle_protocol, _disable_byteorder_record)
+    #   File "C:\Users\Hasan\miniconda3\envs\ML-Art\Lib\site-packages\torch\serialization.py", line 831, in _save
+    #     pickler.dump(obj)
+    # AttributeError: Can't pickle local object 'main.<locals>.<lambda>'
+
+    # Transformations
+
+    if data_cfg.input_shape[0] not in [1, 3]:  # RGB or Grayscale
+        raise ValueError("Use RGB or GrayScale Images")
+
+    transform = transforms.Compose(
+        [transforms.Resize((resize_target)), transforms.ToTensor()]
     )
 
-    torch.save(dataset, "data/processed/dataset.pt")
+    if data_cfg.input_shape[0] == 1:  # Grayscale
+        transform = transforms.Compose(
+            [transform, transforms.Grayscale(num_output_channels=1)]
+        )
 
-    # I'm thinking to save dataset and load it for reproducibility
-    # Or else everytime the images are selected randomly ....
+    print("Selected Styles: ", data_cfg.styles)
 
-    dataset = torch.load("data/processed/dataset.pt")
+    # Create the dataset
+    dataset = WikiArt(
+        root_dir=data_cfg.raw_path,
+        selected_styles=data_cfg.styles,
+        num_images_per_style=data_cfg.imgs_per_style,
+        transform=transform,
+    )
 
-    dataloader = DataLoader(dataset, batch_size=10, shuffle=True)
+    # Split the dataset into training and test sets
+    train_idx, test_idx = train_test_split(
+        list(range(len(dataset))),
+        test_size=data_cfg.test_size,
+        random_state=data_cfg.seed,
+    )
 
-    data_iter = iter(dataloader)
+    # Create subset for training and test from the indices
+    train_dataset = Subset(dataset, train_idx)
+    test_dataset = Subset(dataset, test_idx)
 
-    img, target = next(data_iter)
+    hydra_log_dir = (
+        hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
+    )
 
-    print("Images Batch Shape: ", img.shape)
-    print("Target Batch Shape: ", target.shape)
+    torch.save(train_dataset, os.path.join(hydra_log_dir, "train_set.pt"))
+    torch.save(test_dataset, os.path.join(hydra_log_dir, "test_set.pt"))
+
+    logger.info(
+        f"Processed raw data into a .pt file stored in {hydra_log_dir}"
+    )
 
 
 if __name__ == "__main__":
