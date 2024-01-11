@@ -17,16 +17,19 @@ from typing import Union
 from ml_art.visualizations.visualize import plot_model_performance
 
 # Needed For Loading a Dataset created using WikiArt & pad_resize in make_dataset.py
-from ml_art.data.make_dataset import WikiArt,pad_and_resize
+from ml_art.data.make_dataset import WikiArt, pad_and_resize
 
 
 def train_test_viz(
-    model: Union[torch.nn.Module,timm.models.resnet.ResNet,timm.models.efficientnet.EfficientNet],
+    model: Union[
+        torch.nn.Module,
+        timm.models.resnet.ResNet,
+        timm.models.efficientnet.EfficientNet,
+    ],
     data_loader: torch.utils.data.DataLoader,
     test_loader: torch.utils.data.DataLoader,
     cfg: omegaconf.dictconfig.DictConfig,
-    logger: logging.Logger
-
+    logger: logging.Logger,
 ) -> None:
     """Run prediction for a given model and dataloader.
 
@@ -59,17 +62,18 @@ def train_test_viz(
     testing_losses, testing_accuracies = [], []
 
     # Typical Training Snippet
-    for epoch in tqdm(range(hp.epochs), desc="Epochs",ascii=True):
+    for epoch in tqdm(range(hp.epochs), desc="Epochs", ascii=True):
         logger.info(f"Train Epoch: {epoch+1}")
 
         running_loss = 0.0
         correct = 0
         total = 0
 
-        data_loader = tqdm(data_loader, desc="Training", unit="batch",ascii=True)
+        data_loader = tqdm(
+            data_loader, desc="Training", unit="batch", ascii=True
+        )
 
         for images, labels in data_loader:
-
             images, labels = images.to(device), labels.to(device)
 
             optimizer.zero_grad()
@@ -92,14 +96,12 @@ def train_test_viz(
 
             logger.info(str(data_loader))
 
-
         # Store KPIs
         avg_train_loss = running_loss / len(data_loader)
         train_accuracy = 100 * correct / total
 
         training_losses.append(avg_train_loss)
         training_accuracies.append(train_accuracy)
-
 
         logger.info(f"Test Epoch: {epoch+1}")
         # Model Already on Device
@@ -109,13 +111,14 @@ def train_test_viz(
         correct = 0
         total = 0
 
-        test_loader = tqdm(test_loader, desc="Evaluating", unit="batch",ascii=True)
+        test_loader = tqdm(
+            test_loader, desc="Evaluating", unit="batch", ascii=True
+        )
 
         total_output = []
 
         with torch.no_grad():
             for images, labels in test_loader:
-
                 images, labels = images.to(device), labels.to(device)
 
                 outputs = model(images)
@@ -141,32 +144,35 @@ def train_test_viz(
         testing_losses.append(avg_test_loss)
         testing_accuracies.append(test_accuracy)
 
-
     # Log KPIs & weights
-    hydra_log_dir = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
+    hydra_log_dir = (
+        hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
+    )
 
-    torch.save(model.state_dict(),os.path.join(hydra_log_dir,model_cfg+".pth"))
+    torch.save(
+        model.state_dict(), os.path.join(hydra_log_dir, model_cfg + ".pth")
+    )
     logger.info(f"Saved Weights to {hydra_log_dir}")
 
-
-
-    df = pd.DataFrame({
-                        "Training Loss" : training_losses,
-                        "Training Accuracy" : training_accuracies,
-                        "Testing Loss" : testing_losses,
-                        "Testing Accuracy" : testing_accuracies
-                        })
-    df.to_csv(os.path.join(hydra_log_dir,"train_test_log.csv"),index=False)
+    df = pd.DataFrame(
+        {
+            "Training Loss": training_losses,
+            "Training Accuracy": training_accuracies,
+            "Testing Loss": testing_losses,
+            "Testing Accuracy": testing_accuracies,
+        }
+    )
+    df.to_csv(os.path.join(hydra_log_dir, "train_test_log.csv"), index=False)
     logger.info(f"Saved loss & accuracy to {hydra_log_dir}")
 
-    plot_model_performance(df,cfg.model,hydra_log_dir)
+    plot_model_performance(df, cfg.model, hydra_log_dir)
     logger.info(f"Saved loss & accuracy plots to {hydra_log_dir}")
 
 
-
-@hydra.main(config_path="config",config_name="config.yaml",version_base="1.1")
+@hydra.main(
+    config_path="config", config_name="config.yaml", version_base="1.1"
+)
 def main(config):
-
     # Init Logger - Hydra sets log dirs to outputs/ by default
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
@@ -182,17 +188,16 @@ def main(config):
     torch.manual_seed(data_cfg.seed)
     random.seed(data_cfg.seed)
 
-
-
     # Get Data Loader
-    train_loader,test_loader = wiki_art(config)
-
+    train_loader, test_loader = wiki_art(config)
 
     # Choose model from Hydra config file in ml_art/config
     if model_cfg != "CNN":
         # Try models in timm
         try:
-            model = timm.create_model(model_cfg, num_classes=len(data_cfg.styles),pretrained=False)
+            model = timm.create_model(
+                model_cfg, num_classes=len(data_cfg.styles), pretrained=False
+            )
         except Exception as e:
             print(f"Error: {e}")
             print("Model unknown")
@@ -201,12 +206,7 @@ def main(config):
         # Our custom model
         model = ArtCNN(config)
 
-    train_test_viz(model,train_loader,test_loader,config,logger)
-
-
-
-
-
+    train_test_viz(model, train_loader, test_loader, config, logger)
 
 
 if __name__ == "__main__":

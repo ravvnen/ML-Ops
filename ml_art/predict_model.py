@@ -11,19 +11,22 @@ import torch.nn as nn
 from ml_art.data.data import wiki_art
 from tqdm import tqdm
 from ml_art.models.model import ArtCNN
-from typing import Union#<class 'timm.models.resnet.ResNet'>
+from typing import Union  # <class 'timm.models.resnet.ResNet'>
 
 # Needed For Loading a Dataset created using WikiArt & pad_resize
-from ml_art.data.make_dataset import WikiArt,pad_and_resize
-
+from ml_art.data.make_dataset import WikiArt, pad_and_resize
 
 
 def predict(
-    model: Union[torch.nn.Module,timm.models.resnet.ResNet,timm.models.efficientnet.EfficientNet],
+    model: Union[
+        torch.nn.Module,
+        timm.models.resnet.ResNet,
+        timm.models.efficientnet.EfficientNet,
+    ],
     test_loader: torch.utils.data.DataLoader,
     cfg: omegaconf.dictconfig.DictConfig,
-    logger: logging.Logger
-    ) -> torch.Tensor:
+    logger: logging.Logger,
+) -> torch.Tensor:
     """Run prediction for a given model and dataloader.
 
     Args:
@@ -40,11 +43,9 @@ def predict(
 
     # Hydra Configuration For Model Setup
     model_cfg = cfg.model
-    hp = cfg.hyperparameters
-
 
     # Load Weights
-    state_dict = torch.load(os.path.join(cfg.weights,model_cfg+".pth"))
+    state_dict = torch.load(os.path.join(cfg.weights, model_cfg + ".pth"))
     model.load_state_dict(state_dict)
 
     # Predict
@@ -53,19 +54,19 @@ def predict(
 
     criterion = nn.CrossEntropyLoss()
 
-
     # Typical Prediction Snippet
     test_loss = 0.0
     correct = 0
     total = 0
 
-    test_loader = tqdm(test_loader, desc="Evaluating", unit="batch",ascii=True)
+    test_loader = tqdm(
+        test_loader, desc="Evaluating", unit="batch", ascii=True
+    )
 
     total_output = []
 
     with torch.no_grad():
         for images, labels in test_loader:
-
             images, labels = images.to(device), labels.to(device)
 
             outputs = model(images)
@@ -88,29 +89,27 @@ def predict(
     avg_test_loss = test_loss / len(test_loader)
     test_accuracy = 100 * correct / total
 
-    for i,output in enumerate(total_output):
+    for i, output in enumerate(total_output):
         if i == 0:
             tmp = total_output[i]
         else:
             tmp = torch.cat(total_output)
 
-    logger.info("Model Output: %s",str(output))
-    logger.info("Output Shape: %s",str(output.shape))
-    logger.info("Average Test Loss: %s",str(avg_test_loss))
-    logger.info("Test Accuracy: %s",str(test_accuracy))
+    logger.info("Model Output: %s", str(output))
+    logger.info("Output Shape: %s", str(output.shape))
+    logger.info("Average Test Loss: %s", str(avg_test_loss))
+    logger.info("Test Accuracy: %s", str(test_accuracy))
 
     return tmp
 
 
-
-
-@hydra.main(config_path="config",config_name="config.yaml",version_base="1.1")
+@hydra.main(
+    config_path="config", config_name="config.yaml", version_base="1.1"
+)
 def main(config):
-
     # Init Logger - Hydra sets log dirs to outputs/ by default
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
-
 
     # Hydra Configuration For Model Setup
     data_cfg = config.dataset
@@ -123,15 +122,13 @@ def main(config):
     torch.manual_seed(data_cfg.seed)
     random.seed(data_cfg.seed)
 
-
-
-
-    _,test_loader = wiki_art(config)
-
+    _, test_loader = wiki_art(config)
 
     if model_cfg != "CNN":
         try:
-            model = timm.create_model(model_cfg, num_classes=len(data_cfg.styles) ,pretrained=False)
+            model = timm.create_model(
+                model_cfg, num_classes=len(data_cfg.styles), pretrained=False
+            )
         except Exception as e:
             logger.info(f"Error: {e}")
             logger.info("Model unknown")
@@ -139,8 +136,7 @@ def main(config):
     else:
         model = ArtCNN(config)
 
-    output = predict(model,test_loader,config,logger)
-
+    predict(model, test_loader, config, logger)
 
 
 if __name__ == "__main__":
