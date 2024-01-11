@@ -80,8 +80,12 @@ make train
 
 7. To Viz Training & Testing Loss/Acurracy
 
++ Make sure to add the **FULL PATH** to processed data in config file, this path is logged in terminal when you run make data. 
+
+![dataset processed path](figures/dataset%20processed%20path.png)
+
 ```
-python ml_art/train_test_viz.py
+make train_test
 ```
 
 + You should see
@@ -120,41 +124,7 @@ docker run --name {container_name} -v %cd%/models:/models/ trainer:latest
 
 ## Known Issues -> To Fix
 
-1. Lambda related error in transforms.compose
-
-In ml_art/data/make_dataset.py :
-
-``` Python
-transform = transforms.Compose(
-        [
-            transforms.Lambda(lambda img: pad_and_resize(img)),
-            transforms.ToTensor()
-        ]
-    )
-```
-raises:
-```
-    Traceback (most recent call last):
-  File "c:\Users\Hasan\OneDrive\Desktop\Projects\ML-Ops\ml_art\data\make_dataset.py", line 157, in main
-    torch.save(train_dataset,os.path.join(data_cfg.processed_path,"train_set.pt"))
-  File "C:\Users\Hasan\miniconda3\envs\ML-Art\Lib\site-packages\torch\serialization.py", line 619, in save
-    _save(obj, opened_zipfile, pickle_module, pickle_protocol, _disable_byteorder_record)
-  File "C:\Users\Hasan\miniconda3\envs\ML-Art\Lib\site-packages\torch\serialization.py", line 831, in _save
-    pickler.dump(obj)
-AttributeError: Can't pickle local object 'main.<locals>.<lambda>'
-```
-Temporary Fix:
-
-``` Python
-transform = transforms.Compose(
-            [
-                transforms.Resize((resize_target)),
-                transforms.ToTensor()
-            ]
-        )
-```
-
-2. Loading .pt file requires import
+1. Loading .pt file requires import
 
 In make_dataset.py :
 
