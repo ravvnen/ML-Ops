@@ -95,7 +95,7 @@ docker build -f dockerfiles\train_model.dockerfile . -t ml_art:v1
 Keep in mind backslashes on different machines
 
 ```
-docker run -it -v %cd%\ml_art\:/ml_art/ -v  %cd%\data\:/data/ -v %cd%\outputs\:/outputs/ ml_art:v2   
+docker run -it -v %cd%\ml_art\:/ml_art/ -v  %cd%\data\:/data/ -v %cd%\outputs\:/outputs/ ml_art:v2
 ```
 
 3. Run Interactively
