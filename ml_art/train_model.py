@@ -66,7 +66,9 @@ def train(
         correct = 0
         total = 0
 
-        data_loader = tqdm(data_loader, desc="Training", unit="batch",ascii=True)
+        data_loader = tqdm(
+            data_loader, desc="Training", unit="batch", ascii=True
+        )
 
         for images, labels in data_loader:
             images, labels = images.to(device), labels.to(device)
