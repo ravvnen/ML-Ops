@@ -47,6 +47,13 @@ Setup your desired experiment
     + data/raw/Baroque/Baroque/*.jpg
     + etc
 
++ Make sure to add the **FULL PATH** to raw data in config file
+
+
+![dataset raw path](figures/dataset%20raw%20path.png)
+
++ Then:
+
 ```
 make data
 ```
@@ -56,10 +63,13 @@ make data
 ```
 6. Train the model
 
-+ In your env, from project root
++ Make sure to add the **FULL PATH** to processed data in config file, this path is logged in terminal when you run make data. 
+
+![dataset processed path](figures/dataset%20processed%20path.png)
+
 
 ```
-python ml_art/train_model.py
+make train
 ```
 
 + You should see something like this
