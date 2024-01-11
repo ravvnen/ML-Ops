@@ -1,5 +1,4 @@
 import omegaconf
-import torch
 
 from torch import nn
 import torch.nn as nn
@@ -29,14 +28,21 @@ class ArtCNN(nn.Module):
         self.fc2 = nn.Linear(cfg.cnn.fc2[0],cfg.cnn.fc2[1])
         self.fc3 = nn.Linear(cfg.cnn.fc2[1], len(cfg.dataset.styles))
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass of the model.
+    def forward(self, x):
+        # Apply convolutional layers and pooling
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = self.pool(F.relu(self.conv3(x)))
 
-        Args:
-            x: input tensor expected to be of shape [N,in_features]
+        # Apply adaptive pooling
+        x = self.adaptive_pool(x)
 
-        Returns:
-            Output tensor with shape [N,out_features]
+        # Flatten the tensor
+        x = x.view(x.size(0), -1)
 
-        """
-        return self.l2(self.r(self.l1(x)))
+        # Apply fully connected layers
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+
+        return x

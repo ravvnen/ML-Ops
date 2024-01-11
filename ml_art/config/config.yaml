@@ -9,7 +9,7 @@ cnn:
     fc2: [512, 128]
 hyperparameters:
   lr: 1e-4
-  epochs: 6
+  epochs: 2
 dataset:
   # Path where raw data is stored, includes Academic_Art, Art_nouveau, etc...
   # Keep Raw as relative Path
