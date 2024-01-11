@@ -63,7 +63,7 @@ def train_test_viz(
 
     # Typical Training Snippet
     for epoch in tqdm(range(hp.epochs), desc="Epochs", ascii=True):
-        logger.info(f"Train Epoch: {epoch+1}")
+        logger.info(f"Train Epoch: {epoch + 1}")
 
         running_loss = 0.0
         correct = 0
@@ -103,7 +103,7 @@ def train_test_viz(
         training_losses.append(avg_train_loss)
         training_accuracies.append(train_accuracy)
 
-        logger.info(f"Test Epoch: {epoch+1}")
+        logger.info(f"Test Epoch: {epoch + 1}")
         # Model Already on Device
         model.eval()
 
