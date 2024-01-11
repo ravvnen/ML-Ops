@@ -111,7 +111,7 @@ def main(config):
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     # Create a handler and set the formatter
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
 
@@ -129,11 +129,7 @@ def main(config):
     torch.manual_seed(data_cfg.seed)
     random.seed(data_cfg.seed)
 
-
-
-
-    _,test_loader = wiki_art(config)
-
+    _, test_loader = wiki_art(config)
 
     if model_cfg != "CNN":
         try:
