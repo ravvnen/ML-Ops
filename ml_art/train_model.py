@@ -60,7 +60,7 @@ def train(
 
     # Typical Training Snippet
     for epoch in tqdm(range(hp.epochs), desc="Epochs", ascii=True):
-        logger.info(f"Epoch: {epoch+1}")
+        logger.info(f"Epoch: {epoch + 1}")
 
         running_loss = 0.0
         correct = 0
