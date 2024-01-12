@@ -18,8 +18,7 @@ class PadAndResize:
     def __call__(self, img):
         # Resize if any of the dimensions are greater than target size
         if (
-            img.size[0] > self.target_size[0]
-            or img.size[1] > self.target_size[1]
+            img.size[0] > self.target_size[0] or img.size[1] > self.target_size[1]
         ):
             img.thumbnail(self.target_size, Image.Resampling.LANCZOS)
 
