@@ -14,7 +14,7 @@ from ml_art.models.model import ArtCNN
 from typing import Union  # <class 'timm.models.resnet.ResNet'>
 
 # Needed For Loading a Dataset created using WikiArt & pad_resize
-from ml_art.data.make_dataset import WikiArt, pad_and_resize
+from ml_art.data.make_dataset import WikiArt, PadAndResize
 
 
 def predict(

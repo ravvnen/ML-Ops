@@ -4,30 +4,34 @@ import hydra
 import torch
 import logging
 
+from omegaconf import OmegaConf
 from torchvision import transforms
 from torch.utils.data import Dataset, Subset
-from PIL import Image, UnidentifiedImageError
-from omegaconf import OmegaConf
+from PIL import Image, UnidentifiedImageError, ImageOps
 from sklearn.model_selection import train_test_split
 
 
-# Here we can change the input size of given images
-def pad_and_resize(img, target_size):
-    # Resize if any of the dimensions are greater than target size
-    if img.size[0] > target_size[0] or img.size[1] > target_size[1]:
-        # Scale down yet keeping the aspect ratio
-        img.thumbnail(target_size, Image.Resampling.LANCZOS)
+class PadAndResize:
+    def __init__(self, target_size):
+        self.target_size = target_size
 
-    # Calculate padding
-    padding_l = (target_size[0] - img.size[0]) // 2
-    padding_t = (target_size[1] - img.size[1]) // 2
-    padding_r = target_size[0] - img.size[0] - padding_l
-    padding_b = target_size[1] - img.size[1] - padding_t
-    paddings = (padding_l, padding_t, padding_r, padding_b)
+    def __call__(self, img):
+        # Resize if any of the dimensions are greater than target size
+        if (
+            img.size[0] > self.target_size[0] or img.size[1] > self.target_size[1]
+        ):
+            img.thumbnail(self.target_size, Image.Resampling.LANCZOS)
 
-    return transforms.functional.pad(
-        img, paddings, padding_mode="constant", fill=0
-    )
+        # Calculate padding
+        padding_l = (self.target_size[0] - img.size[0]) // 2
+        padding_t = (self.target_size[1] - img.size[1]) // 2
+        padding_r = self.target_size[0] - img.size[0] - padding_l
+        padding_b = self.target_size[1] - img.size[1] - padding_t
+        paddings = (padding_l, padding_t, padding_r, padding_b)
+
+        # Add padding
+        img = ImageOps.expand(img, border=paddings, fill=0)
+        return img
 
 
 class WikiArt(Dataset):
@@ -140,8 +144,11 @@ def main(config):
     if data_cfg.input_shape[0] not in [1, 3]:  # RGB or Grayscale
         raise ValueError("Use RGB or GrayScale Images")
 
+    # transform = transforms.Compose(
+    #     [transforms.Resize((resize_target)), transforms.ToTensor()]
+    # )
     transform = transforms.Compose(
-        [transforms.Resize((resize_target)), transforms.ToTensor()]
+        [PadAndResize(resize_target), transforms.ToTensor()]
     )
 
     if data_cfg.input_shape[0] == 1:  # Grayscale
