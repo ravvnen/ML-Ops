@@ -5,6 +5,8 @@ import timm
 import random
 import logging
 import omegaconf
+import wandb
+import glob
 
 import torch.optim as optim
 import torch.nn as nn
@@ -16,6 +18,7 @@ from ml_art.models.model import ArtCNN
 from typing import Union
 
 # Needed For Loading a Dataset created using WikiArt & pad_resize in make_dataset.py
+from ml_art.visualizations.visualize import plot_model_performance
 from ml_art.data.make_dataset import WikiArt, PadAndResize
 
 
@@ -28,6 +31,7 @@ def train(
     data_loader: torch.utils.data.DataLoader,
     cfg: omegaconf.dictconfig.DictConfig,
     logger: logging.Logger,
+    profiler: torch.profiler.profile,
 ) -> None:
     """Run prediction for a given model and dataloader.
 
@@ -71,6 +75,10 @@ def train(
         )
 
         for images, labels in data_loader:
+            # Very Important For Profiling
+            if profiler is not None:
+                profiler.step()
+
             images, labels = images.to(device), labels.to(device)
 
             optimizer.zero_grad()
@@ -105,6 +113,7 @@ def train(
         hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
     )
 
+    # Save Weights
     torch.save(
         model.state_dict(), os.path.join(hydra_log_dir, model_cfg + ".pth")
     )
@@ -127,6 +136,16 @@ def main(config):
     # Init Logger - Hydra sets log dirs to outputs/ by default
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
+    hydra_log_dir = (
+        hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
+    )
+
+    # ML Experiment Tracking Platform (Requires W&B Account -> Will ask for API Key)
+    wandb.init(
+        project="ml-art",
+        config=omegaconf.OmegaConf.to_container(config),
+        sync_tensorboard=True,
+    )
 
     # Hydra Configuration For Model Setup
     data_cfg = config.dataset
@@ -157,7 +176,55 @@ def main(config):
         # Our custom model
         model = ArtCNN(config)
 
-    train(model, train_loader, config, logger)
+    # Enable Profiler for examining bottlenecks
+    if config.profile is True:
+        with torch.profiler.profile(
+            activities=[
+                torch.profiler.ProfilerActivity.CPU,
+                torch.profiler.ProfilerActivity.CUDA,
+            ],
+            schedule=torch.profiler.schedule(
+                wait=1, warmup=1, active=3, repeat=1
+            ),
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(
+                hydra_log_dir
+            ),
+            record_shapes=True,
+            profile_memory=True,
+            with_stack=True,
+        ) as prof:
+            train(model, train_loader, config, logger, prof)
+
+        if torch.cuda.is_available():
+            logger.info(
+                prof.key_averages().table(
+                    sort_by="cpu_time_total", row_limit=10
+                )
+            )
+            logger.info(
+                prof.key_averages().table(
+                    sort_by="cuda_time_total", row_limit=10
+                )
+            )
+        else:
+            logger.info(
+                prof.key_averages().table(
+                    sort_by="cpu_time_total", row_limit=10
+                )
+            )
+
+        # Save Trace to W&B (Requieres administator rights)
+        trace_path = glob.glob(os.path.join(hydra_log_dir, "*.pt.trace.json"))[
+            0
+        ]
+        wandb.save(trace_path)
+
+    # Run without profiler
+    else:
+        train(model, train_loader, config, logger, None)
+
+    # Visualize KPIs
+    plot_model_performance(hydra_log_dir, config.model)
 
 
 if __name__ == "__main__":
