@@ -1,5 +1,6 @@
 # Choose model from: CNN, resnet18,resnet34,resnet50,tf_efficientnet_lite0
 
+profile: False
 model: "CNN"
 cnn:
     # Make sure input_channels match with input_shape in dataset
