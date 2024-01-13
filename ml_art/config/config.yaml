@@ -20,13 +20,11 @@ dataset:
   processed_path: outputs\2024-01-15\13-00-51
   raw_path: data/raw
   seed: 2476
-  styles:
-  - Symbolism
-  - Romanticism
   test_size: 0.2
-hyperparameters:
-  epochs: 2
-  lr: 1e-4
-model: resnet18
-profile: true
-weights: outputs\2024-01-15\13-18-52
+  batch_size: 64
+  dataloader_shuffle: True
+  input_shape: [1,512,512]
+# Path where train_model.py or train_test_viz.pt saves the weights
+# Make sure weights match the model
+# weights is only used in predict_model.py
+weights: C:\Users\Hasan\OneDrive\Desktop\Projects\ML-Ops\outputs\2024-01-10\21-06-05

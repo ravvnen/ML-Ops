@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
+from sentry_sdk import flush
 import wandb
 import glob
 import numpy as np
@@ -84,3 +85,6 @@ def plot_model_performance(log_path, model_name):
         dpi=200,
         bbox_inches="tight",
     )
+
+    if wandb.run:
+        wandb.log({"Accuracy": fig})
