@@ -1,20 +1,25 @@
 import os
+from sentry_sdk import flush
 import torch
 import hydra
 import timm
 import random
 import logging
 import omegaconf
+import wandb
+import glob
 
 import torch.nn as nn
 
 from ml_art.data.data import wiki_art
 from tqdm import tqdm
 from ml_art.models.model import ArtCNN
-from typing import Union  # <class 'timm.models.resnet.ResNet'>
+from typing import Union
 
 # Needed For Loading a Dataset created using WikiArt & pad_resize
 from ml_art.data.make_dataset import WikiArt, pad_and_resize
+
+from ml_art.visualizations.visualize import wandb_table
 
 
 def predict(
@@ -26,6 +31,7 @@ def predict(
     test_loader: torch.utils.data.DataLoader,
     cfg: omegaconf.dictconfig.DictConfig,
     logger: logging.Logger,
+    profiler: torch.profiler.profile,
 ) -> torch.Tensor:
     """Run prediction for a given model and dataloader.
 
@@ -63,14 +69,17 @@ def predict(
         test_loader, desc="Evaluating", unit="batch", ascii=True
     )
 
-    total_output = []
+    total_outputs = []
 
     with torch.no_grad():
         for images, labels in test_loader:
+            # Very Important For Profiling
+            if profiler is not None:
+                profiler.step()
             images, labels = images.to(device), labels.to(device)
 
             outputs = model(images)
-            total_output.append(outputs)
+            total_outputs.append(outputs)
 
             loss = criterion(outputs, labels)
             test_loss += loss.item()
@@ -89,14 +98,12 @@ def predict(
     avg_test_loss = test_loss / len(test_loader)
     test_accuracy = 100 * correct / total
 
-    for i, output in enumerate(total_output):
+    for i, output in enumerate(total_outputs):
         if i == 0:
-            tmp = total_output[i]
+            tmp = output
         else:
-            tmp = torch.cat(total_output)
+            tmp = torch.cat(total_outputs)
 
-    logger.info("Model Output: %s", str(tmp))
-    logger.info("Output Shape: %s", str(tmp.shape))
     logger.info("Average Test Loss: %s", str(avg_test_loss))
     logger.info("Test Accuracy: %s", str(test_accuracy))
 
@@ -110,13 +117,16 @@ def main(config):
     # Init Logger - Hydra sets log dirs to outputs/ by default
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
-    # Create a handler and set the formatter
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
+    hydra_log_dir = (
+        hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
+    )
 
-    # Add the handler to the logger
-    logger.addHandler(handler)
+    # ML Experiment Tracking Platform (Requires W&B Account -> Will ask for API Key)
+    wandb.init(
+        project="ml-art",
+        config=omegaconf.OmegaConf.to_container(config),
+        sync_tensorboard=True,
+    )
 
     # Hydra Configuration For Model Setup
     data_cfg = config.dataset
@@ -128,10 +138,11 @@ def main(config):
     # Ensure Reproducibility
     torch.manual_seed(data_cfg.seed)
     random.seed(data_cfg.seed)
-
+    # Get Data loader
     _, test_loader = wiki_art(config)
-
+    # Choose model from Hydra config file in ml_art/config
     if model_cfg != "CNN":
+        # Try models in timm
         try:
             model = timm.create_model(
                 model_cfg, num_classes=len(data_cfg.styles), pretrained=False
@@ -141,9 +152,58 @@ def main(config):
             logger.info("Model unknown")
 
     else:
+        # Our custom model
         model = ArtCNN(config)
+    # Enable Profiler for examining bottlenecks
+    if config.profile is True:
+        with torch.profiler.profile(
+            activities=[
+                torch.profiler.ProfilerActivity.CPU,
+                torch.profiler.ProfilerActivity.CUDA,
+            ],
+            schedule=torch.profiler.schedule(
+                wait=1, warmup=1, active=3, repeat=1
+            ),
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(
+                hydra_log_dir
+            ),
+            record_shapes=True,
+            profile_memory=True,
+            with_stack=True,
+        ) as prof:
+            pred_scores = predict(model, test_loader, config, logger, prof)
 
-    predict(model, test_loader, config, logger)
+        if torch.cuda.is_available():
+            logger.info(
+                prof.key_averages().table(
+                    sort_by="cpu_time_total", row_limit=10
+                )
+            )
+            logger.info(
+                prof.key_averages().table(
+                    sort_by="cuda_time_total", row_limit=10
+                )
+            )
+        else:
+            logger.info(
+                prof.key_averages().table(
+                    sort_by="cpu_time_total", row_limit=10
+                )
+            )
+
+        # Save Trace to W&B (Requieres administator rights)
+        trace_path = glob.glob(os.path.join(hydra_log_dir, "*.pt.trace.json"))[
+            0
+        ]
+        wandb.save(trace_path)
+
+    # Run without profiler
+    else:
+        pred_scores = predict(model, test_loader, config, logger, None)
+
+    pred_probs = torch.nn.functional.softmax(pred_scores, dim=1)
+    table = wandb_table(test_loader, pred_probs, config, logger)
+    wandb.log({"WikiArt Classification": table})
 
 
 if __name__ == "__main__":
