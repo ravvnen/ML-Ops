@@ -15,7 +15,7 @@ from ml_art.data.data import wiki_art
 from tqdm import tqdm
 from ml_art.models.model import ArtCNN
 from typing import Union
-from ml_art.visualizations.visualize import plot_model_performance
+from ml_art.visualizations.visualize import plot_model_performance, wandb_table
 from hydra.core.hydra_config import HydraConfig
 
 # Needed For Loading a Dataset created using WikiArt & pad_resize in make_dataset.py
@@ -223,7 +223,12 @@ def main(config):
         # Our custom model
         model = ArtCNN(config)
 
-    train_test_viz(model, train_loader, test_loader, config, logger)
+    pred_scores = train_test_viz(
+        model, train_loader, test_loader, config, logger
+    )
+    pred_probs = torch.nn.functional.softmax(pred_scores, dim=1)
+    table = wandb_table(test_loader, pred_probs, config, logger)
+    wandb.log({"WikiArt Classification": table})
 
 
 if __name__ == "__main__":
