@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
-from sentry_sdk import flush
 import wandb
 import glob
 import numpy as np
@@ -15,6 +14,12 @@ def plot_model_performance(log_path, model_name):
     # Load Model Performances
 
     df = pd.read_csv(glob.glob(os.path.join(log_path, "*.csv"))[0])
+
+    # To Avoid Any Unbound variables
+    training_losses = []
+    testing_losses = []
+    training_accuracies = []
+    testing_accuracies = []
 
     # To Avoid Any Unbound variables
     training_losses = []
@@ -88,3 +93,91 @@ def plot_model_performance(log_path, model_name):
 
     if wandb.run:
         wandb.log({"Accuracy": fig})
+
+
+def view_classify(img, ps, cfg):
+    """Function for viewing an image and it's predicted classes."""
+    ps = ps.data.numpy().squeeze()
+
+    fig, (ax1, ax2) = plt.subplots(figsize=(6, 9), ncols=2)
+    ax1.imshow(img.numpy().squeeze())
+    ax1.axis("off")
+
+    # if version == "MNIST":
+    #     ax2.set_yticklabels(np.arange(10))
+    # elif version == "Fashion":
+    #     ax2.set_yticklabels(
+    #         [
+    #             "T-shirt/top",
+    #             "Trouser",
+    #             "Pullover",
+    #             "Dress",
+    #             "Coat",
+    #             "Sandal",
+    #             "Shirt",
+    #             "Sneaker",
+    #             "Bag",
+    #             "Ankle Boot",
+    #         ],
+    #         size="small",
+    # )
+    ax2.set_title("Class Probability")
+    ax2.set_xlim(0, 1.1)
+
+    plt.tight_layout()
+
+    return fig
+
+
+def view_scores(scores, cfg):
+    # Create a new figure
+    fig = plt.figure()
+
+    # Add a subplot to the figure
+    ax = fig.add_subplot(1, 1, 1)  # 1 row, 1 column, first subplot
+
+    ax.barh(np.arange(len(cfg.dataset.styles)), scores)
+    ax.set_aspect(1.1)
+    ax.set_yticks(np.arange(len(cfg.dataset.styles)))
+    ax.set_yticklabels(cfg.dataset.styles, size="small")
+    ax.tick_params(axis="y", which="major", labelsize=16)
+    ax.set_xlim(0, 1)
+    plt.close()
+
+    return fig
+
+
+def wandb_table(data_loader, preds, config, logger):
+    tbl = wandb.Table(
+        columns=["image", "scores", "prediction", "ground_truth"]
+    )
+
+    data_loader = tqdm(data_loader, desc="Creating W&B Table", ascii=True)
+
+    for imgs, targets in data_loader:
+        targets_to_style = [
+            config.dataset.styles[target.item()] for target in targets
+        ]
+        preds_to_style = [
+            config.dataset.styles[pred.item()]
+            for pred in torch.argmax(preds, dim=1)
+        ]
+        [
+            tbl.add_data(
+                wandb.Image(img),
+                wandb.Image(view_scores(score, config)),
+                pred,
+                target,
+            )
+            for img, score, pred, target in zip(
+                imgs, preds.cpu(), preds_to_style, targets_to_style
+            )
+        ]
+
+        # Figures created in view_scores are closed for memory
+        plt.close("all")
+
+        data_loader.set_postfix()
+        logger.info(str(data_loader))
+
+    return tbl

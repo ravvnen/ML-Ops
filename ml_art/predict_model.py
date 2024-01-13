@@ -33,6 +33,7 @@ def predict(
     test_loader: torch.utils.data.DataLoader,
     cfg: omegaconf.dictconfig.DictConfig,
     logger: logging.Logger,
+    profiler: torch.profiler.profile,
 ) -> torch.Tensor:
     """Run prediction for a given model and dataloader.
 
@@ -86,6 +87,7 @@ def predict(
             images, labels = images.to(device), labels.to(device)
 
             outputs = model(images)
+            print("Outputs Shape: ", outputs.shape)
             total_outputs.append(outputs)
 
             loss = criterion(outputs, labels)
@@ -105,11 +107,9 @@ def predict(
     avg_test_loss = test_loss / len(test_loader)
     test_accuracy = 100 * correct / total
 
-    for i, output in enumerate(total_output):
-        if i == 0:
-            tmp = total_output[i]
-        else:
-            tmp = torch.cat(total_output)
+    tmp = torch.cat(total_outputs)
+
+    print("tmp shape: ", tmp.shape)
 
     logger.info("Average Test Loss: %s", str(avg_test_loss))
     logger.info("Test Accuracy: %s", str(test_accuracy))

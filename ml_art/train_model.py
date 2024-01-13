@@ -1,3 +1,4 @@
+from distutils import core
 import os
 import torch
 import hydra
@@ -30,6 +31,7 @@ def train(
     data_loader: torch.utils.data.DataLoader,
     cfg: omegaconf.dictconfig.DictConfig,
     logger: logging.Logger,
+    profiler: torch.profiler.profile,
 ) -> None:
     """Run prediction for a given model and dataloader.
 
@@ -132,6 +134,16 @@ def main(config):
     # Init Logger - Hydra sets log dirs to outputs/ by default
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
+    hydra_log_dir = (
+        hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
+    )
+
+    # ML Experiment Tracking Platform (Requires W&B Account -> Will ask for API Key)
+    wandb.init(
+        project="ml-art",
+        config=omegaconf.OmegaConf.to_container(config),
+        sync_tensorboard=True,
+    )
 
     # Hydra Configuration For Model Setup
     data_cfg = config.dataset
