@@ -5,6 +5,7 @@ import timm
 import random
 import logging
 import omegaconf
+import wandb
 
 import torch.optim as optim
 import torch.nn as nn
@@ -15,6 +16,7 @@ from tqdm import tqdm
 from ml_art.models.model import ArtCNN
 from typing import Union
 from ml_art.visualizations.visualize import plot_model_performance
+from hydra.core.hydra_config import HydraConfig
 
 # Needed For Loading a Dataset created using WikiArt & pad_resize in make_dataset.py
 from ml_art.data.make_dataset import WikiArt, pad_and_resize
@@ -30,7 +32,7 @@ def train_test_viz(
     test_loader: torch.utils.data.DataLoader,
     cfg: omegaconf.dictconfig.DictConfig,
     logger: logging.Logger,
-) -> None:
+) -> torch.Tensor:
     """Run prediction for a given model and dataloader.
 
     Args:
@@ -40,7 +42,8 @@ def train_test_viz(
         logger: logger object
 
     Returns
-        None: Saves weights & KPIs in Hydra Default Log Dir
+        Tensor of shape [N, d] where N is the number of samples and d is the output dimension of the model
+        Only for last epoch
 
     """
 
@@ -60,6 +63,8 @@ def train_test_viz(
 
     training_losses, training_accuracies = [], []
     testing_losses, testing_accuracies = [], []
+
+    test_output = []
 
     # Typical Training Snippet
     for epoch in tqdm(range(hp.epochs), desc="Epochs", ascii=True):
@@ -115,14 +120,13 @@ def train_test_viz(
             test_loader, desc="Evaluating", unit="batch", ascii=True
         )
 
-        total_output = []
-
         with torch.no_grad():
             for images, labels in test_loader:
                 images, labels = images.to(device), labels.to(device)
 
                 outputs = model(images)
-                total_output.append(outputs)
+                if epoch == hp.epochs - 1:
+                    test_output.append(outputs)
 
                 loss = criterion(outputs, labels)
                 test_loss += loss.item()
@@ -145,9 +149,7 @@ def train_test_viz(
         testing_accuracies.append(test_accuracy)
 
     # Log KPIs & weights
-    hydra_log_dir = (
-        hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
-    )
+    hydra_log_dir = HydraConfig.get().runtime.output_dir
 
     torch.save(
         model.state_dict(), os.path.join(hydra_log_dir, model_cfg + ".pth")
@@ -165,7 +167,11 @@ def train_test_viz(
     df.to_csv(os.path.join(hydra_log_dir, "train_test_log.csv"), index=False)
     logger.info(f"Saved loss & accuracy to {hydra_log_dir}")
 
-    plot_model_performance(df, cfg.model, hydra_log_dir)
+    plot_model_performance(hydra_log_dir, cfg.model)
+
+    tmp = torch.cat(test_output)
+
+    return tmp
 
 
 @hydra.main(
@@ -175,6 +181,17 @@ def main(config):
     # Init Logger - Hydra sets log dirs to outputs/ by default
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
+
+    # ML Experiment Tracking Platform (Requires W&B Account -> Will ask for API Key)
+    config_dict = omegaconf.OmegaConf.to_container(config, resolve=True)
+    if isinstance(config_dict, dict):
+        wandb.init(
+            project="ml-art",
+            config=config_dict,
+            sync_tensorboard=True,
+        )
+    else:
+        raise ValueError("Config must be a dictionary.")
 
     # Hydra Configuration For Model Setup
     data_cfg = config.dataset
@@ -198,8 +215,9 @@ def main(config):
                 model_cfg, num_classes=len(data_cfg.styles), pretrained=False
             )
         except Exception as e:
-            print(f"Error: {e}")
-            print("Model unknown")
+            logger.info(f"Error: {e}")
+            logger.info("Model unknown")
+            raise ValueError("Model unknown")
 
     else:
         # Our custom model

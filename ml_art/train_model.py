@@ -1,3 +1,4 @@
+from distutils import core
 import os
 import torch
 import hydra
@@ -16,6 +17,7 @@ from ml_art.data.data import wiki_art
 from tqdm import tqdm
 from ml_art.models.model import ArtCNN
 from typing import Union
+from hydra.core.hydra_config import HydraConfig
 
 # Needed For Loading a Dataset created using WikiArt & pad_resize in make_dataset.py
 from ml_art.data.make_dataset import WikiArt, pad_and_resize
@@ -31,7 +33,7 @@ def train(
     data_loader: torch.utils.data.DataLoader,
     cfg: omegaconf.dictconfig.DictConfig,
     logger: logging.Logger,
-    profiler: torch.profiler.profile,
+    profiler: Union[torch.profiler.profile, None],
 ) -> None:
     """Run prediction for a given model and dataloader.
 
@@ -109,9 +111,7 @@ def train(
         training_accuracies.append(epoch_acc)
 
     # Log KPIs & weights
-    hydra_log_dir = (
-        hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
-    )
+    hydra_log_dir = HydraConfig.get().runtime.output_dir
 
     # Save Weights
     torch.save(
@@ -136,16 +136,18 @@ def main(config):
     # Init Logger - Hydra sets log dirs to outputs/ by default
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
-    hydra_log_dir = (
-        hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
-    )
+    hydra_log_dir = HydraConfig.get().runtime.output_dir
 
     # ML Experiment Tracking Platform (Requires W&B Account -> Will ask for API Key)
-    wandb.init(
-        project="ml-art",
-        config=omegaconf.OmegaConf.to_container(config),
-        sync_tensorboard=True,
-    )
+    config_dict = omegaconf.OmegaConf.to_container(config, resolve=True)
+    if isinstance(config_dict, dict):
+        wandb.init(
+            project="ml-art",
+            config=config_dict,
+            sync_tensorboard=True,
+        )
+    else:
+        raise ValueError("Config must be a dictionary.")
 
     # Hydra Configuration For Model Setup
     data_cfg = config.dataset
@@ -171,6 +173,7 @@ def main(config):
         except Exception as e:
             logger.info(f"Error: {e}")
             logger.info("Model unknown")
+            raise ValueError("Model unknown")
 
     else:
         # Our custom model
