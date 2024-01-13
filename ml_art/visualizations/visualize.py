@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
-from sentry_sdk import flush
 import wandb
 import glob
 import numpy as np
@@ -9,14 +8,18 @@ import torch
 
 from tqdm import tqdm
 
-from ml_art import data
-
 
 def plot_model_performance(log_path, model_name):
     # Meant for training/training-testing, for testing accuracy is a sufficient metric
     # Load Model Performances
 
     df = pd.read_csv(glob.glob(os.path.join(log_path, "*.csv"))[0])
+
+    # To Avoid Any Unbound variables
+    training_losses = []
+    testing_losses = []
+    training_accuracies = []
+    testing_accuracies = []
 
     try:
         training_losses = df["Training Loss"].to_list()
@@ -95,40 +98,6 @@ def plot_model_performance(log_path, model_name):
 
     if wandb.run:
         wandb.log({"Accuracy": fig})
-
-
-def view_classify(img, ps, cfg):
-    """Function for viewing an image and it's predicted classes."""
-    ps = ps.data.numpy().squeeze()
-
-    fig, (ax1, ax2) = plt.subplots(figsize=(6, 9), ncols=2)
-    ax1.imshow(img.numpy().squeeze())
-    ax1.axis("off")
-
-    # if version == "MNIST":
-    #     ax2.set_yticklabels(np.arange(10))
-    # elif version == "Fashion":
-    #     ax2.set_yticklabels(
-    #         [
-    #             "T-shirt/top",
-    #             "Trouser",
-    #             "Pullover",
-    #             "Dress",
-    #             "Coat",
-    #             "Sandal",
-    #             "Shirt",
-    #             "Sneaker",
-    #             "Bag",
-    #             "Ankle Boot",
-    #         ],
-    #         size="small",
-    # )
-    ax2.set_title("Class Probability")
-    ax2.set_xlim(0, 1.1)
-
-    plt.tight_layout()
-
-    return fig
 
 
 def view_scores(scores, cfg):
