@@ -15,6 +15,7 @@ from tqdm import tqdm
 from ml_art.models.model import ArtCNN
 from typing import Union
 from ml_art.visualizations.visualize import plot_model_performance
+from hydra.core.hydra_config import HydraConfig
 
 # Needed For Loading a Dataset created using WikiArt & pad_resize in make_dataset.py
 from ml_art.data.make_dataset import WikiArt, PadAndResize
