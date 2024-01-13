@@ -169,8 +169,8 @@ def main(config):
                 model_cfg, num_classes=len(data_cfg.styles), pretrained=False
             )
         except Exception as e:
-            print(f"Error: {e}")
-            print("Model unknown")
+            logger.info(f"Error: {e}")
+            logger.info("Model unknown")
 
     else:
         # Our custom model

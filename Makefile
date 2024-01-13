@@ -46,6 +46,8 @@ train:
 
 train_test:
 	python $(PROJECT_NAME)/train_test_viz.py
+test:
+	python $(PROJECT_NAME)/predict_model.py
 
 
 
