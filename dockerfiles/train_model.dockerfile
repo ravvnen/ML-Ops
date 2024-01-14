@@ -20,6 +20,8 @@ RUN mkdir outputs
 WORKDIR /
 RUN make requirements
 
+ENV LOCAL_PATH=/
+
 ENTRYPOINT ["make","data"]
 
 # Set the default command to run "make train"
