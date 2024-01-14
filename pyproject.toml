@@ -13,7 +13,8 @@ authors = [
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
-requires-python = ">=3.11"
+# Changed to greater than 3.8 to use nvidia/cuda base image
+requires-python = ">=3.8"
 dynamic = ["dependencies", "optional-dependencies"]
 
 [tool.black]
