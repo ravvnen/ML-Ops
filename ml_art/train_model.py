@@ -22,6 +22,21 @@ from hydra.core.hydra_config import HydraConfig
 from ml_art.data.make_dataset import WikiArt, pad_and_resize
 
 
+def config_weight_path_edit(file_path, new_value):
+    # Load YAML data from the file
+    with open(file_path, "r") as file:
+        yaml_data = yaml.safe_load(file)
+
+    # Edit the specified key in the YAML data
+    yaml_data["weights"] = new_value
+
+    # Write the updated YAML data back to the file
+    with open(file_path, "w") as file:
+        yaml.dump(yaml_data, file, default_flow_style=False)
+
+    print("changed file")
+
+
 def train(
     model: Union[
         torch.nn.Module,
@@ -176,6 +191,16 @@ def main(config):
         model = ArtCNN(config)
 
     train(model, train_loader, config, logger)
+
+    # Set weights in config file (Automatically as compared to manually)
+    root_dir = os.getenv("LOCAL_PATH")
+    relative_path = os.path.relpath(hydra_log_dir, root_dir)
+    if root_dir is not None:
+        config_file_path = os.path.join(
+            root_dir, "ml_art/config", "config.yaml"
+        )
+        config_weight_path_edit(config_file_path, relative_path)
+        logger.info(f"Set weights in config file to:  {relative_path}")
 
 
 if __name__ == "__main__":

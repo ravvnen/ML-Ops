@@ -1,7 +1,6 @@
 from calendar import c
 import os
 import random
-import re
 import hydra
 import torch
 import logging
@@ -13,6 +12,22 @@ from torch.utils.data import Dataset, Subset
 from PIL import Image, UnidentifiedImageError, ImageOps
 from hydra.core.hydra_config import HydraConfig
 from sklearn.model_selection import train_test_split
+import yaml
+
+
+def edit_yaml_file(file_path, key1, key2, new_value):
+    # Load YAML data from the file
+    with open(file_path, "r") as file:
+        yaml_data = yaml.safe_load(file)
+
+    # Edit the specified key in the YAML data
+    yaml_data[key1][key2] = new_value
+
+    # Write the updated YAML data back to the file
+    with open(file_path, "w") as file:
+        yaml.dump(yaml_data, file, default_flow_style=False)
+
+    print("changed file")
 
 
 # Here we can change the input size of given images
@@ -190,6 +205,14 @@ def main(config):
     logger.info(
         f"Processed raw data into a .pt file stored in {hydra_log_dir}"
     )
+
+    # Set processed path in config file (Automatically as compared to manually)
+    relative_path = os.path.relpath(hydra_log_dir, root_dir)
+    config_file_path = os.path.join(root_dir, "ml_art/config", "config.yaml")
+    edit_yaml_file(
+        config_file_path, "dataset", "processed_path", relative_path
+    )
+    logger.info(f"Set processed_path in config file to:  {relative_path}")
 
 
 if __name__ == "__main__":
