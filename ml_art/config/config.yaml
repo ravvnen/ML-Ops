@@ -16,7 +16,7 @@ dataset:
   # Keep Raw as relative Path
   # In Docker /data/raw - /data/raw
   # Windows Full Path
-  raw_path: C:\Users\Hasan\OneDrive\Desktop\Projects\ML-Ops\data\raw
+  raw_path: /data/raw
   # Path where make_dataset.py saves .pt files - used for train_model.py
   processed_path: c:\Users\Hasan\OneDrive\Desktop\Projects\ML-Ops\outputs\2024-01-13\14-14-44
   styles:  ["Symbolism", "Romanticism"]
