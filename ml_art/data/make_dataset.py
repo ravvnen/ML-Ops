@@ -1,14 +1,34 @@
+from calendar import c
 import os
 import random
+import re
 import hydra
 import torch
 import logging
 
 from torchvision import transforms
+from torchvision.transforms import functional
 from torch.utils.data import Dataset, Subset
 from PIL import Image, UnidentifiedImageError
 from omegaconf import OmegaConf
+from hydra.core.hydra_config import HydraConfig
 from sklearn.model_selection import train_test_split
+import yaml
+
+
+def edit_yaml_file(file_path, key1, key2, new_value):
+    # Load YAML data from the file
+    with open(file_path, "r") as file:
+        yaml_data = yaml.safe_load(file)
+
+    # Edit the specified key in the YAML data
+    yaml_data[key1][key2] = new_value
+
+    # Write the updated YAML data back to the file
+    with open(file_path, "w") as file:
+        yaml.dump(yaml_data, file, default_flow_style=False)
+
+    print("changed file")
 
 
 # Here we can change the input size of given images
@@ -25,9 +45,7 @@ def pad_and_resize(img, target_size):
     padding_b = target_size[1] - img.size[1] - padding_t
     paddings = (padding_l, padding_t, padding_r, padding_b)
 
-    return transforms.functional.pad(
-        img, paddings, padding_mode="constant", fill=0
-    )
+    return functional.pad(img, paddings, padding_mode="constant", fill=0)
 
 
 class WikiArt(Dataset):
@@ -57,6 +75,7 @@ class WikiArt(Dataset):
         # Load images and labels
         for style in selected_styles:
             style_dir = os.path.join(root_dir, style, style)
+            print("Raw Data Path: ", style_dir)
             assert os.path.isdir(style_dir)
 
             if os.path.isdir(style_dir):
@@ -151,13 +170,17 @@ def main(config):
 
     print("Selected Styles: ", data_cfg.styles)
 
-    # Create the dataset
-    dataset = WikiArt(
-        root_dir=data_cfg.raw_path,
-        selected_styles=data_cfg.styles,
-        num_images_per_style=data_cfg.imgs_per_style,
-        transform=transform,
-    )
+    root_dir = os.getenv("LOCAL_PATH")
+    if root_dir is not None:
+        # Create the dataset
+        dataset = WikiArt(
+            root_dir=os.path.join(root_dir, data_cfg.raw_path),
+            selected_styles=data_cfg.styles,
+            num_images_per_style=data_cfg.imgs_per_style,
+            transform=transform,
+        )
+    else:
+        raise ValueError("LOCAL_PATH not found")
 
     # Split the dataset into training and test sets
     train_idx, test_idx = train_test_split(
@@ -170,9 +193,7 @@ def main(config):
     train_dataset = Subset(dataset, train_idx)
     test_dataset = Subset(dataset, test_idx)
 
-    hydra_log_dir = (
-        hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
-    )
+    hydra_log_dir = HydraConfig.get().runtime.output_dir
 
     torch.save(train_dataset, os.path.join(hydra_log_dir, "train_set.pt"))
     torch.save(test_dataset, os.path.join(hydra_log_dir, "test_set.pt"))
@@ -180,6 +201,14 @@ def main(config):
     logger.info(
         f"Processed raw data into a .pt file stored in {hydra_log_dir}"
     )
+
+    # Set processed path in config file (Automatically as compared to manually)
+    relative_path = os.path.relpath(hydra_log_dir, root_dir)
+    config_file_path = os.path.join(root_dir, "ml_art/config", "config.yaml")
+    edit_yaml_file(
+        config_file_path, "dataset", "processed_path", relative_path
+    )
+    logger.info(f"Set processed_path in config file to:  {relative_path}")
 
 
 if __name__ == "__main__":
