@@ -3,7 +3,7 @@ name: DVC Pull
 on:
   push:
     branches:
-      - feature/wandb-logging
+      - origin/feature/wandb-logging
 
 
 jobs:
