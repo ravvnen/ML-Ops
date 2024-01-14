@@ -10,15 +10,15 @@ cnn:
   - 128
   input_channels: 3
 dataset:
-  batch_size: 64
-  dataloader_shuffle: true
-  imgs_per_style: 100
-  input_shape:
-  - 3
-  - 512
-  - 512
-  processed_path: outputs\2024-01-15\13-00-51
-  raw_path: data/raw
+  # Path where raw data is stored, includes Academic_Art, Art_nouveau, etc...
+  # Keep Raw as relative Path
+  # In Docker /data/raw - /data/raw
+  # Windows Full Path
+  raw_path: C:\Users\Hasan\OneDrive\Desktop\Projects\ML-Ops\data\raw
+  # Path where make_dataset.py saves .pt files - used for train_model.py
+  processed_path: c:\Users\Hasan\OneDrive\Desktop\Projects\ML-Ops\outputs\2024-01-13\14-14-44
+  styles:  ["Symbolism", "Romanticism"]
+  imgs_per_style: 300
   seed: 2476
   test_size: 0.2
   batch_size: 64
