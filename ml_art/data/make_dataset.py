@@ -1,6 +1,5 @@
 import os
 import random
-import re
 import hydra
 import torch
 import logging
@@ -15,13 +14,13 @@ from sklearn.model_selection import train_test_split
 import yaml
 
 
-def edit_yaml_file(file_path, key1, key2, new_value):
+def config_processed_path_edit(file_path, new_value):
     # Load YAML data from the file
     with open(file_path, "r") as file:
         yaml_data = yaml.safe_load(file)
 
     # Edit the specified key in the YAML data
-    yaml_data[key1][key2] = new_value
+    yaml_data["dataset"]["processed"] = new_value
 
     # Write the updated YAML data back to the file
     with open(file_path, "w") as file:
@@ -213,9 +212,7 @@ def main(config):
     # Set processed path in config file (Automatically as compared to manually)
     relative_path = os.path.relpath(hydra_log_dir, root_dir)
     config_file_path = os.path.join(root_dir, "ml_art/config", "config.yaml")
-    edit_yaml_file(
-        config_file_path, "dataset", "processed_path", relative_path
-    )
+    config_processed_path_edit(config_file_path, relative_path)
     logger.info(f"Set processed_path in config file to:  {relative_path}")
 
 
