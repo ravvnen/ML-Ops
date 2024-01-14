@@ -12,6 +12,7 @@ import glob
 import torch.optim as optim
 import torch.nn as nn
 import pandas as pd
+import yaml
 
 from ml_art.data.data import wiki_art
 from tqdm import tqdm
@@ -22,6 +23,21 @@ from hydra.core.hydra_config import HydraConfig
 # Needed For Loading a Dataset created using WikiArt & pad_resize in make_dataset.py
 from ml_art.data.make_dataset import WikiArt, pad_and_resize
 from ml_art.visualizations.visualize import plot_model_performance
+
+
+def config_weight_path_edit(file_path, new_value):
+    # Load YAML data from the file
+    with open(file_path, "r") as file:
+        yaml_data = yaml.safe_load(file)
+
+    # Edit the specified key in the YAML data
+    yaml_data["weights"] = new_value
+
+    # Write the updated YAML data back to the file
+    with open(file_path, "w") as file:
+        yaml.dump(yaml_data, file, default_flow_style=False)
+
+    print("changed file")
 
 
 def train(
@@ -228,6 +244,16 @@ def main(config):
 
     # Visualize KPIs
     plot_model_performance(hydra_log_dir, config.model)
+
+    # Set weights in config file (Automatically as compared to manually)
+    root_dir = os.getenv("LOCAL_PATH")
+    relative_path = os.path.relpath(hydra_log_dir, root_dir)
+    if root_dir is not None:
+        config_file_path = os.path.join(
+            root_dir, "ml_art/config", "config.yaml"
+        )
+        config_weight_path_edit(config_file_path, relative_path)
+        logger.info(f"Set weights in config file to:  {relative_path}")
 
 
 if __name__ == "__main__":
