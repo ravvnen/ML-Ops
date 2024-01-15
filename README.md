@@ -93,21 +93,38 @@ python ml_art/train_test_viz.py
 1. Build Docker
 
 ```
-docker build -f dockerfiles\train_model.dockerfile . -t ml_art:v1
+docker build -f dockerfiles\train_model.dockerfile . -t <image_name>:<tag>
 ```
-2. Mount Volume
+2. Mount Volume & Run Interactively
 
-Keep in mind backslashes on different machines
-
-```
-docker run -it -v %cd%\ml_art\:/ml_art/ -v  %cd%\data\:/data/ -v %cd%\outputs\:/outputs/ ml_art:v2
-```
-
-3. Run Interactively
+We mount src files to edit files in container, data for dataloader to access input, outputs to access results (weights, plots, etc..)
 
 ```
-docker run --name {container_name} -v %cd%/models:/models/ trainer:latest
+docker run -it -v %cd%\ml_art\:/ml_art/ -v  %cd%\data\:/data/ -v %cd%\outputs\:/outputs/ <image_name>:<tag>
 ```
+
+**OR Create A Bash Script**
+
+3. run.sh:
+
++ CPU:
+```
+docker run -it -v "${PWD}/ml_art:/ml_art/" -v "${PWD}/data:/data/" -v "${PWD}/outputs:/outputs/" <container_name>:<tag>
+```
++ GPU:
+```
+docker run --gpus all -it -v "${PWD}/ml_art:/ml_art/" -v "${PWD}/data:/data/" -v "${PWD}/outputs:/outputs/"  <container_name>:<tag>
+```
++ Then run (on Windows requires bash via WSL):
+
+```
+bash dockerfiles/run.sh
+```
+## Weights & Biases
+
+![W&B](figures/W&B.png)
+
+
 
 
 
