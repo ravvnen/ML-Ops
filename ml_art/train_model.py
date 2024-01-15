@@ -21,7 +21,8 @@ from typing import Union
 from hydra.core.hydra_config import HydraConfig
 
 # Needed For Loading a Dataset created using WikiArt & pad_resize in make_dataset.py
-from ml_art.data.make_dataset import WikiArt, pad_and_resize
+
+from ml_art.data.make_dataset import WikiArt, PadAndResize
 from ml_art.visualizations.visualize import plot_model_performance
 
 
@@ -36,6 +37,7 @@ def config_weight_path_edit(file_path, new_value):
     # Write the updated YAML data back to the file
     with open(file_path, "w") as file:
         yaml.dump(yaml_data, file, default_flow_style=False)
+
 
 
 def train(
