@@ -20,7 +20,7 @@ def config_processed_path_edit(file_path, new_value):
         yaml_data = yaml.safe_load(file)
 
     # Edit the specified key in the YAML data
-    yaml_data["dataset"]["processed"] = new_value
+    yaml_data["dataset"]["processed_path"] = new_value
 
     # Write the updated YAML data back to the file
     with open(file_path, "w") as file:

@@ -1,4 +1,3 @@
-from distutils import core
 import os
 import torch
 import hydra
@@ -8,6 +7,7 @@ import logging
 import omegaconf
 import wandb
 import glob
+import warnings
 
 import torch.optim as optim
 import torch.nn as nn
@@ -36,8 +36,6 @@ def config_weight_path_edit(file_path, new_value):
     # Write the updated YAML data back to the file
     with open(file_path, "w") as file:
         yaml.dump(yaml_data, file, default_flow_style=False)
-
-    print("changed file")
 
 
 def train(
@@ -162,6 +160,10 @@ def main(config):
             config=config_dict,
             sync_tensorboard=True,
         )
+        # Suppress UserWarnings from plotly
+        warnings.filterwarnings(
+            "ignore", category=UserWarning, module="plotly"
+        )
     else:
         raise ValueError("Config must be a dictionary.")
 
@@ -233,10 +235,14 @@ def main(config):
             )
 
         # Save Trace to W&B (Requieres administator rights)
-        trace_path = glob.glob(os.path.join(hydra_log_dir, "*.pt.trace.json"))[
-            0
-        ]
-        wandb.save(trace_path)
+        files_with_pattern = glob.glob(
+            os.path.join(hydra_log_dir, "*.pt.trace.json")
+        )
+        if len(files_with_pattern) > 0:
+            trace_path = files_with_pattern[0]
+            wandb.save(trace_path)
+        else:
+            logger.info("No trace file found")
 
     # Run without profiler
     else:
