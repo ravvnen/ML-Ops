@@ -21,3 +21,5 @@ jobs:
       - name: Run Tests
         run: |
             make requirements
+            pip install pytest
+            pytest ml_art/tests/
