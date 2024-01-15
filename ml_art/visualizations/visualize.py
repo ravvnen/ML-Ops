@@ -21,13 +21,7 @@ def plot_model_performance(log_path, model_name):
     training_accuracies = []
     testing_accuracies = []
 
-    # To Avoid Any Unbound variables
-    training_losses = []
-    testing_losses = []
-    training_accuracies = []
-    testing_accuracies = []
-
-    if "Training Loss" in df.columns:
+    try:
         training_losses = df["Training Loss"].to_list()
 
     if "Training Accuracy" in df.columns:
@@ -71,16 +65,23 @@ def plot_model_performance(log_path, model_name):
 
     # Plot training and testing accuracy
     fig, ax = plt.subplots(figsize=(10, 4), dpi=200)
-    plt.plot(
-        range(1, len(training_losses) + 1),
-        training_accuracies,
-        label="Training Accuracy",
-    )
-    plt.plot(
-        range(1, len(training_losses) + 1),
-        testing_accuracies,
-        label="Testing Accuracy",
-    )
+    try:
+        plt.plot(
+            range(1, len(training_losses) + 1),
+            training_accuracies,
+            label="Training Accuracy",
+        )
+    except Exception as e:
+        print(e)
+    try:
+        plt.plot(
+            range(1, len(training_losses) + 1),
+            testing_accuracies,
+            label="Testing Accuracy",
+        )
+    except Exception as e:
+        print(e)
+
     plt.xlabel("Epoch")
     plt.ylabel("Accuracy (%)")
     plt.title(f"{model_name}: Training and Testing Accuracy over Epochs")

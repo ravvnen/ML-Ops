@@ -17,6 +17,7 @@ dataset:
   - 3
   - 512
   - 512
+  processed: outputs\2024-01-14\22-41-24
   processed_path: outputs\2024-01-14\22-27-50
   raw_path: data/raw
   seed: 2476
@@ -27,22 +28,7 @@ dataset:
 hyperparameters:
   lr: 1e-4
   epochs: 2
-dataset:
-  # Path where raw data is stored, includes Academic_Art, Art_nouveau, etc...
-  # Keep Raw as relative Path
-  # In Docker /data/raw - /data/raw
-  # Windows Full Path
-  raw_path: /data/raw
-  # Path where make_dataset.py saves .pt files - used for train_model.py
-  processed_path: c:\Users\Hasan\OneDrive\Desktop\Projects\ML-Ops\outputs\2024-01-13\14-14-44
-  styles:  ["Symbolism", "Romanticism"]
-  imgs_per_style: 300
-  seed: 2476
-  test_size: 0.5
-  batch_size: 64
-  dataloader_shuffle: True
-  input_shape: [1,512,512]
-# Path where train_model.py or train_test_viz.pt saves the weights
-# Make sure weights match the model
-# weights is only used in predict_model.py
+  lr: 1e-4
+model: resnet18
+profile: false
 weights: C:\Users\Hasan\OneDrive\Desktop\Projects\ML-Ops\outputs\2024-01-13\14-15-13

@@ -1,4 +1,3 @@
-from calendar import c
 import os
 import random
 import hydra
@@ -21,7 +20,7 @@ def edit_yaml_file(file_path, key1, key2, new_value):
         yaml_data = yaml.safe_load(file)
 
     # Edit the specified key in the YAML data
-    yaml_data[key1][key2] = new_value
+    yaml_data["dataset"]["processed"] = new_value
 
     # Write the updated YAML data back to the file
     with open(file_path, "w") as file:

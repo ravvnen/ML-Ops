@@ -87,7 +87,6 @@ def predict(
             images, labels = images.to(device), labels.to(device)
 
             outputs = model(images)
-            print("Outputs Shape: ", outputs.shape)
             total_outputs.append(outputs)
 
             loss = criterion(outputs, labels)
@@ -108,8 +107,6 @@ def predict(
     test_accuracy = 100 * correct / total
 
     tmp = torch.cat(total_outputs)
-
-    print("tmp shape: ", tmp.shape)
 
     logger.info("Average Test Loss: %s", str(avg_test_loss))
     logger.info("Test Accuracy: %s", str(test_accuracy))

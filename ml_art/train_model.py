@@ -1,4 +1,3 @@
-from distutils import core
 import os
 import torch
 import hydra
@@ -6,6 +5,8 @@ import timm
 import random
 import logging
 import omegaconf
+import wandb
+import glob
 
 import torch.optim as optim
 import torch.nn as nn
@@ -33,8 +34,6 @@ def config_weight_path_edit(file_path, new_value):
     # Write the updated YAML data back to the file
     with open(file_path, "w") as file:
         yaml.dump(yaml_data, file, default_flow_style=False)
-
-    print("changed file")
 
 
 def train(
@@ -154,11 +153,15 @@ def main(config):
     )
 
     # ML Experiment Tracking Platform (Requires W&B Account -> Will ask for API Key)
-    wandb.init(
-        project="ml-art",
-        config=omegaconf.OmegaConf.to_container(config),
-        sync_tensorboard=True,
-    )
+    config_dict = omegaconf.OmegaConf.to_container(config, resolve=True)
+    if isinstance(config_dict, dict):
+        wandb.init(
+            project="ml-art",
+            config=config_dict,
+            sync_tensorboard=True,
+        )
+    else:
+        raise ValueError("Config must be a dictionary.")
 
     # Hydra Configuration For Model Setup
     data_cfg = config.dataset
@@ -190,7 +193,55 @@ def main(config):
         # Our custom model
         model = ArtCNN(config)
 
-    train(model, train_loader, config, logger)
+    # Enable Profiler for examining bottlenecks
+    if config.profile is True:
+        with torch.profiler.profile(
+            activities=[
+                torch.profiler.ProfilerActivity.CPU,
+                torch.profiler.ProfilerActivity.CUDA,
+            ],
+            schedule=torch.profiler.schedule(
+                wait=1, warmup=1, active=3, repeat=1
+            ),
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(
+                hydra_log_dir
+            ),
+            record_shapes=True,
+            profile_memory=True,
+            with_stack=True,
+        ) as prof:
+            train(model, train_loader, config, logger, prof)
+
+        if torch.cuda.is_available():
+            logger.info(
+                prof.key_averages().table(
+                    sort_by="cpu_time_total", row_limit=10
+                )
+            )
+            logger.info(
+                prof.key_averages().table(
+                    sort_by="cuda_time_total", row_limit=10
+                )
+            )
+        else:
+            logger.info(
+                prof.key_averages().table(
+                    sort_by="cpu_time_total", row_limit=10
+                )
+            )
+
+        # Save Trace to W&B (Requieres administator rights)
+        trace_path = glob.glob(os.path.join(hydra_log_dir, "*.pt.trace.json"))[
+            0
+        ]
+        wandb.save(trace_path)
+
+    # Run without profiler
+    else:
+        train(model, train_loader, config, logger, None)
+
+    # Visualize KPIs
+    plot_model_performance(hydra_log_dir, config.model)
 
     # Set weights in config file (Automatically as compared to manually)
     root_dir = os.getenv("LOCAL_PATH")

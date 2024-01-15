@@ -5,6 +5,7 @@ import timm
 import random
 import logging
 import omegaconf
+import wandb
 
 import torch.optim as optim
 import torch.nn as nn
@@ -180,6 +181,17 @@ def main(config):
     # Init Logger - Hydra sets log dirs to outputs/ by default
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
+
+    # ML Experiment Tracking Platform (Requires W&B Account -> Will ask for API Key)
+    config_dict = omegaconf.OmegaConf.to_container(config, resolve=True)
+    if isinstance(config_dict, dict):
+        wandb.init(
+            project="ml-art",
+            config=config_dict,
+            sync_tensorboard=True,
+        )
+    else:
+        raise ValueError("Config must be a dictionary.")
 
     # Hydra Configuration For Model Setup
     data_cfg = config.dataset
