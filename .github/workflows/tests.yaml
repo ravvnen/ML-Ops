@@ -22,4 +22,5 @@ jobs:
         run: |
             make requirements
             pip install pytest
+            export LOCAL_PATH=/
             pytest ml_art/tests/
