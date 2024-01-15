@@ -62,7 +62,8 @@ def test_pad_and_resize():
     assert output_image.size == target_size
 
     # Check that padding was applied correctly by examining the pixel values
-    # at the corners of the image, which should be (0, 0, 0) if the padding is black
+    # at the corners of the image, which should be (0, 0, 0)
+    # if the padding is black
     corners = [
         (0, 0),  # Top-left corner
         (0, target_size[1] - 1),  # Bottom-left corner
