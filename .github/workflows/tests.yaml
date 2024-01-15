@@ -11,16 +11,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.11'
+          cache: 'pip'
+
+      - name: Cache dependencies
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/*.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          make requirements
+          pip install pytest
 
       - name: Run Tests
         run: |
-            make requirements
-            pip install pytest
-            export LOCAL_PATH=/
-            pytest tests/
+          export LOCAL_PATH=/
+          pytest ml_art/tests/
