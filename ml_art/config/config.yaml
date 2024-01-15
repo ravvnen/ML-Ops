@@ -1,31 +1,32 @@
-# Choose model from: CNN, resnet18,resnet34,resnet50,tf_efficientnet_lite0
-
-model: "CNN"
 cnn:
-    # Make sure input_channels match with input_shape in dataset
-    input_channels: 1
-    adaptive_pool: [128,128]
-    fc1: [2097152,512] # (128 * 128 * 128, 12)
-    fc2: [512, 128]
-hyperparameters:
-  lr: 1e-4
-  epochs: 2
+  adaptive_pool:
+  - 128
+  - 128
+  fc1:
+  - 2097152
+  - 512
+  fc2:
+  - 512
+  - 128
+  input_channels: 3
 dataset:
-  # Path where raw data is stored, includes Academic_Art, Art_nouveau, etc...
-  # Keep Raw as relative Path
-  # In Docker /data/raw - /data/raw
-  # Windows Full Path
-  raw_path: C:\Users\Hasan\OneDrive\Desktop\Projects\ML-Ops\data\raw
-  # Path where make_dataset.py saves .pt files - used for train_model.py
-  processed_path: C:\Users\Hasan\OneDrive\Desktop\Projects\ML-Ops\outputs\2024-01-11\17-33-47
-  styles:  ["Symbolism", "Romanticism"]
-  imgs_per_style: 100
-  seed: 2476
-  test_size: 0.2
   batch_size: 64
-  dataloader_shuffle: True
-  input_shape: [1,512,512]
-# Path where train_model.py or train_test_viz.pt saves the weights
-# Make sure weights match the model
-# weights is only used in predict_model.py
-weights: C:\Users\Hasan\OneDrive\Desktop\Projects\ML-Ops\outputs\2024-01-10\21-06-05
+  dataloader_shuffle: true
+  imgs_per_style: 100
+  input_shape:
+  - 3
+  - 512
+  - 512
+  processed_path: outputs\2024-01-15\13-00-51
+  raw_path: data/raw
+  seed: 2476
+  styles:
+  - Symbolism
+  - Romanticism
+  test_size: 0.2
+hyperparameters:
+  epochs: 2
+  lr: 1e-4
+model: resnet18
+profile: true
+weights: outputs\2024-01-15\13-18-52

@@ -19,7 +19,7 @@ data/*.h5
 venv/
 .venv/
 
-/data/raw/*
+/data/raw/*/
 /data/processed/*
 /outputs
 

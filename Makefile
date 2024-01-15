@@ -22,6 +22,13 @@ requirements:
 	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
 	$(PYTHON_INTERPRETER) -m pip install -e .
 
+## Install Python Dependencies + Torch with CUDA # TODO dependency management with setup.py
+# cuda_requirements:
+# 	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
+# 	$(shell pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu121)
+# 	$(PYTHON_INTERPRETER) -m pip install -r requirementsCUDA.txt
+# 	$(PYTHON_INTERPRETER) -m pip install -e .
+
 ## Install Developer Python Dependencies
 dev_requirements: requirements
 	$(PYTHON_INTERPRETER) -m pip install .["dev"]
@@ -46,6 +53,8 @@ train:
 
 train_test:
 	python $(PROJECT_NAME)/train_test_viz.py
+test:
+	python $(PROJECT_NAME)/predict_model.py
 
 
 
