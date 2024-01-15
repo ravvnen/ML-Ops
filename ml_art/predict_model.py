@@ -1,5 +1,4 @@
 import os
-from sentry_sdk import flush
 import torch
 import hydra
 import timm
@@ -8,6 +7,8 @@ import logging
 import omegaconf
 import wandb
 import glob
+import warnings
+import time
 
 import torch.nn as nn
 
@@ -52,8 +53,14 @@ def predict(
     model_cfg = cfg.model
 
     # Load Weights
-    state_dict = torch.load(os.path.join(cfg.weights, model_cfg + ".pth"))
-    model.load_state_dict(state_dict)
+    root_dir = os.getenv("LOCAL_PATH")
+    if root_dir is not None:
+        state_dict = torch.load(
+            os.path.join(root_dir, cfg.weights, model_cfg + ".pth")
+        )
+        model.load_state_dict(state_dict)
+    else:
+        raise ValueError("LOCAL_PATH not set")
 
     # Predict
     model.eval()
@@ -80,7 +87,6 @@ def predict(
             images, labels = images.to(device), labels.to(device)
 
             outputs = model(images)
-            print("Outputs Shape: ", outputs.shape)
             total_outputs.append(outputs)
 
             loss = criterion(outputs, labels)
@@ -101,8 +107,6 @@ def predict(
     test_accuracy = 100 * correct / total
 
     tmp = torch.cat(total_outputs)
-
-    print("tmp shape: ", tmp.shape)
 
     logger.info("Average Test Loss: %s", str(avg_test_loss))
     logger.info("Test Accuracy: %s", str(test_accuracy))
@@ -126,6 +130,10 @@ def main(config):
             project="ml-art",
             config=config_dict,
             sync_tensorboard=True,
+        )
+        # Suppress UserWarnings from plotly
+        warnings.filterwarnings(
+            "ignore", category=UserWarning, module="plotly"
         )
     else:
         raise ValueError("Config must be a dictionary.")
@@ -152,7 +160,7 @@ def main(config):
         except Exception as e:
             logger.info(f"Error: {e}")
             logger.info("Model unknown")
-            raise (ValueError("Model unknown"))
+            raise ValueError("Model unknown")
 
     else:
         # Our custom model
@@ -195,10 +203,14 @@ def main(config):
             )
 
         # Save Trace to W&B (Requieres administator rights)
-        trace_path = glob.glob(os.path.join(hydra_log_dir, "*.pt.trace.json"))[
-            0
-        ]
-        wandb.save(trace_path)
+        files_with_pattern = glob.glob(
+            os.path.join(hydra_log_dir, "*.pt.trace.json")
+        )
+        if len(files_with_pattern) > 0:
+            trace_path = files_with_pattern[0]
+            wandb.save(trace_path)
+        else:
+            logger.info("No trace file found")
 
     # Run without profiler
     else:

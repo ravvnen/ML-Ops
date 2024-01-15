@@ -6,6 +6,7 @@ import random
 import logging
 import omegaconf
 import wandb
+import warnings
 
 import torch.optim as optim
 import torch.nn as nn
@@ -189,6 +190,10 @@ def main(config):
             project="ml-art",
             config=config_dict,
             sync_tensorboard=True,
+        )
+        # Suppress UserWarnings from plotly
+        warnings.filterwarnings(
+            "ignore", category=UserWarning, module="plotly"
         )
     else:
         raise ValueError("Config must be a dictionary.")
