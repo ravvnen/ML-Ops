@@ -38,4 +38,4 @@ jobs:
       - name: Run Tests
         run: |
           export LOCAL_PATH=/
-          pytest tests/
+          pytest ml_art/tests/
