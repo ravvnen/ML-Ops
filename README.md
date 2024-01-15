@@ -122,9 +122,26 @@ bash dockerfiles/run.sh
 ```
 ## Weights & Biases
 
-![W&B](figures/W&B.png)
+<div style="text-align:center;">
+    <img src="figures/W&B.png" alt="W&B" width="100%" height="50%">
+</div>
 
-
+1. Vizualize Predictions
+<div style="text-align:center;">
+    <img src="figures/W&B_Viz.png" alt="W&B" width="100%" height="50%">
+</div>
+1. Store Logs
+<div style="text-align:center;">
+    <img src="figures/logs.png" alt="W&B" width="100%" height="50%">
+</div>
+3. Tensorboard Sync
+<div style="text-align:center;">
+    <img src="figures/Tensorboard_Sync.png" alt="W&B" width="100%" height="50%">
+</div>
+3. System Monitoring
+<div style="text-align:center;">
+    <img src="figures/system_monitoring.png" alt="W&B" width="100%" height="50%">
+</div>
 
 
 
