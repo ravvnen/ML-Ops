@@ -6,6 +6,7 @@ import random
 import logging
 import omegaconf
 import wandb
+import warnings
 
 import torch.optim as optim
 import torch.nn as nn
@@ -15,7 +16,7 @@ from ml_art.data.data import wiki_art
 from tqdm import tqdm
 from ml_art.models.model import ArtCNN
 from typing import Union
-from ml_art.visualizations.visualize import plot_model_performance
+from ml_art.visualizations.visualize import plot_model_performance, wandb_table
 from hydra.core.hydra_config import HydraConfig
 
 # Needed For Loading a Dataset created using WikiArt & pad_resize in make_dataset.py
@@ -189,6 +190,10 @@ def main(config):
             project="ml-art",
             config=config_dict,
             sync_tensorboard=True,
+        )
+        # Suppress UserWarnings from plotly
+        warnings.filterwarnings(
+            "ignore", category=UserWarning, module="plotly"
         )
     else:
         raise ValueError("Config must be a dictionary.")

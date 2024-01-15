@@ -21,7 +21,7 @@ def plot_model_performance(log_path, model_name):
     training_accuracies = []
     testing_accuracies = []
 
-    try:
+    if "Training Loss" in df.columns:
         training_losses = df["Training Loss"].to_list()
 
     if "Training Accuracy" in df.columns:
@@ -65,22 +65,20 @@ def plot_model_performance(log_path, model_name):
 
     # Plot training and testing accuracy
     fig, ax = plt.subplots(figsize=(10, 4), dpi=200)
-    try:
+
+    if training_accuracies:
         plt.plot(
-            range(1, len(training_losses) + 1),
+            range(1, len(training_accuracies) + 1),
             training_accuracies,
             label="Training Accuracy",
         )
-    except Exception as e:
-        print(e)
-    try:
+
+    if testing_accuracies:
         plt.plot(
-            range(1, len(training_losses) + 1),
+            range(1, len(testing_accuracies) + 1),
             testing_accuracies,
             label="Testing Accuracy",
         )
-    except Exception as e:
-        print(e)
 
     plt.xlabel("Epoch")
     plt.ylabel("Accuracy (%)")
@@ -94,40 +92,6 @@ def plot_model_performance(log_path, model_name):
 
     if wandb.run:
         wandb.log({"Accuracy": fig})
-
-
-def view_classify(img, ps, cfg):
-    """Function for viewing an image and it's predicted classes."""
-    ps = ps.data.numpy().squeeze()
-
-    fig, (ax1, ax2) = plt.subplots(figsize=(6, 9), ncols=2)
-    ax1.imshow(img.numpy().squeeze())
-    ax1.axis("off")
-
-    # if version == "MNIST":
-    #     ax2.set_yticklabels(np.arange(10))
-    # elif version == "Fashion":
-    #     ax2.set_yticklabels(
-    #         [
-    #             "T-shirt/top",
-    #             "Trouser",
-    #             "Pullover",
-    #             "Dress",
-    #             "Coat",
-    #             "Sandal",
-    #             "Shirt",
-    #             "Sneaker",
-    #             "Bag",
-    #             "Ankle Boot",
-    #         ],
-    #         size="small",
-    # )
-    ax2.set_title("Class Probability")
-    ax2.set_xlim(0, 1.1)
-
-    plt.tight_layout()
-
-    return fig
 
 
 def view_scores(scores, cfg):

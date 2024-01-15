@@ -33,7 +33,7 @@ def predict(
     test_loader: torch.utils.data.DataLoader,
     cfg: omegaconf.dictconfig.DictConfig,
     logger: logging.Logger,
-    profiler: torch.profiler.profile,
+    profiler: Union[torch.profiler.profile, None],
 ) -> torch.Tensor:
     """Run prediction for a given model and dataloader.
 
