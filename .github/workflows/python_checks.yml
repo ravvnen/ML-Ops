@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install flake8 black
+          pip install flake8 black "black[jupyter]"
 
       - name: Check code with Black
         run: |
