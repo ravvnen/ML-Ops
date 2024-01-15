@@ -50,7 +50,7 @@ def test_train(mock_optimizer, mock_hydra_get, dummy_dataloader):
         logger = logging.getLogger("test")
 
         # Call the train function
-        train(model, dummy_dataloader, cfg, logger)
+        train(model, dummy_dataloader, cfg, logger, None)
 
         # Assert that the optimizer's step function was called
         mock_optimizer_instance.step.assert_called()

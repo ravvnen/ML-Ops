@@ -35,7 +35,7 @@ def test_predict(mock_create_model, mock_torch_load, mock_dataloader):
     logger = MagicMock()
 
     # Call the predict function
-    result = predict(mock_model, mock_dataloader, cfg, logger)
+    result = predict(mock_model, mock_dataloader, cfg, logger, None)
 
     # Assertions
     assert isinstance(
