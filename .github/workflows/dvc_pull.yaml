@@ -19,7 +19,7 @@ jobs:
           python-version: '3.11'
 
       - name: DVC Pull
-        run:
+        run: |
             pip install dvc dvc[gdrive]
             dvc pull
         env:

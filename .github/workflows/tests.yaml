@@ -23,4 +23,4 @@ jobs:
             make requirements
             pip install pytest
             export LOCAL_PATH=/
-            pytest ml_art/tests/
+            pytest tests/
