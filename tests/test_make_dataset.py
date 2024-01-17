@@ -13,11 +13,11 @@ def mock_env(monkeypatch):
     monkeypatch.setenv("LOCAL_PATH", "/fake/path/to/data")
 
 
-# Test to check if the fake data folder exists
+# Test to check if the data folder exists
 def test_data_folder_existence(mock_env):
     with patch("os.path.isdir") as mock_isdir:
         mock_isdir.return_value = True
-        assert os.path.isdir("/fake/path/to/data") == True
+        assert os.path.isdir("/fake/path/to/data")
 
 
 # Test to check correct data pulling
@@ -26,13 +26,11 @@ def test_data_folder_existence(mock_env):
 @patch("ml_art.data.make_dataset.os.path.isdir")
 @patch("omegaconf.OmegaConf.to_yaml")
 @patch("hydra.core.hydra_config.HydraConfig.get")
-@patch("os.getenv", return_value="/fake/path") 
-def test_main_function(
-    mock_hydra_get, mock_to_yaml, mock_isdir, mock_WikiArt, mock_torch_save, mock_getenv
-):
+@patch("os.getenv", return_value="/fake/path")
+def test_main_function(mock_hydra_get, mock_to_yaml, mock_isdir, mock_WikiArt, mock_torch_save, mock_getenv):
     # Mock the os.getenv to return a fake path
     mock_getenv.return_value = "/fake/local/path"
-    
+
     # Mock the isdir function to always return True
     mock_isdir.return_value = True
 
@@ -50,7 +48,7 @@ def test_main_function(
         mock_WikiArt.return_value = MagicMock()
         mock_WikiArt.return_value.__len__.return_value = 200
         # print(len(mock_WikiArt))
-        
+
         # TODO: Fix when we can figure out why the mock_WikiArt is empty
         # # Create a mock configuration object
         # config = OmegaConf.create(
