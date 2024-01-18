@@ -27,7 +27,14 @@ def test_data_folder_existence(mock_env):
 @patch("omegaconf.OmegaConf.to_yaml")
 @patch("hydra.core.hydra_config.HydraConfig.get")
 @patch("os.getenv", return_value="/fake/path")
-def test_main_function(mock_hydra_get, mock_to_yaml, mock_isdir, mock_WikiArt, mock_torch_save, mock_getenv):
+def test_main_function(
+    mock_hydra_get,
+    mock_to_yaml,
+    mock_isdir,
+    mock_WikiArt,
+    mock_torch_save,
+    mock_getenv,
+):
     # Mock the os.getenv to return a fake path
     mock_getenv.return_value = "/fake/local/path"
 
