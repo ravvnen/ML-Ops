@@ -20,6 +20,7 @@ venv/
 .venv/
 
 /data/raw/*/
+/data/raw/*/*.zip
 /data/processed/*
 /outputs
 

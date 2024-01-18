@@ -22,6 +22,13 @@ requirements:
 	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
 	$(PYTHON_INTERPRETER) -m pip install -e .
 
+## Install Python Dependencies
+cuda_requirements:
+	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
+	pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
+	$(PYTHON_INTERPRETER) -m pip install -e .
+
 ## Install Python Dependencies + Torch with CUDA # TODO dependency management with setup.py
 # cuda_requirements:
 # 	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
