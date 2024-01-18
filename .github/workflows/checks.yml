@@ -1,4 +1,4 @@
-name: Python Checks
+name: Deployment Test
 
 on:
   push:
@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install dependencies
+      - name: Install Format & Linter Dependencies
         run: |
           pip install flake8 black "black[jupyter]"
 
@@ -29,3 +29,10 @@ jobs:
       - name: Lint with flake8
         run: |
           flake8 .
+      - name: Install Core Dependcies
+        run: |
+          make requirements
+          pip install pytest
+          pytest tests/
+        env:
+          LOCAL_PATH: ${{ github.workspace }}
