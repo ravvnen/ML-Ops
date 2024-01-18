@@ -19,7 +19,13 @@ def mock_dataloader():
 # Test for the predict function
 @patch("ml_art.predict_model.torch.load")  # Mock torch.load
 @patch("ml_art.predict_model.timm.create_model")  # Mock timm.create_model
-def test_predict(mock_create_model, mock_torch_load, mock_dataloader):
+@patch("os.getenv")  # Mock os.getenv to provide a value for LOCAL_PATH
+def test_predict(
+    mock_getenv, mock_create_model, mock_torch_load, mock_dataloader
+):
+    # Mock the return value of os.getenv for LOCAL_PATH
+    mock_getenv.return_value = "/mock/path/to/weights"
+
     # Setup mock model to return a tensor
     mock_model = MagicMock()
     mock_model.return_value = torch.randn(2, 2)  # Mock output tensor
