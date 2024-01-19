@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0 # Use a specific version
+    rev: v4.5.0 # Use a specific version
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -10,12 +10,12 @@ repos:
       - id: check-added-large-files
 
   - repo: https://github.com/psf/black
-    rev: stable # Use the latest stable version
+    rev: 23.12.1 # Use the latest stable version
     hooks:
       - id: black
         language_version: python3 # Set the Python version for black
 
   - repo: https://github.com/pycqa/flake8
-    rev: 3.9.2 # Use the latest stable version of flake8
+    rev: 7.0.0 # Use the latest stable version of flake8
     hooks:
       - id: flake8

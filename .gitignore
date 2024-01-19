@@ -10,7 +10,6 @@
 build/
 html/
 .benchmarks/
-reports/
 lectures/
 logs/
 ressources/
